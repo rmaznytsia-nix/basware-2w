@@ -6,6 +6,43 @@ Context: this 2-week SOW (you + 1 Data Engineer, embedded in Basware's Cresco te
 
 Client contacts on this SOW: **Anthony Kirkland** (Enterprise Data Product Manager) and **Nishant Redekar** (Director Enterprise Architecture) — governance line. Barrett Schiwitz was the intro-call contact; confirm at kickoff whether he's still involved day-to-day or whether Kirkland/Redekar are now your primary counterparts.
 
+## Contents
+
+- [1. Role design](#1-role-design--use-specialist-capacity-deliberately)
+- [1A. KPI elicitation strategy](#1a-kpi-elicitation-strategy--turn-documented-definitions-into-tested-operating-definitions)
+  - [Working principle](#working-principle)
+  - [KPI development workflow](#kpi-development-workflow)
+  - [What success looks like](#what-success-looks-like-for-the-selected-kpi)
+  - [Tone and workshop framing](#tone-and-workshop-framing)
+- [2. Prep window](#2-prep-window-monday-aug-24--tuesday-aug-25)
+  - [Monday Aug 24](#monday-aug-24)
+  - [Tuesday Aug 25](#tuesday-aug-25)
+- [3. Week 1](#3-week-1-wed-aug-26--fri-aug-28-continuing-mon-aug-31)
+- [4. Week 2](#4-week-2-mon-aug-31--fri-sep-4)
+- [5. AI leverage checklist](#5-ai-leverage-checklist--use-it-everywhere-it-saves-time-or-raises-quality)
+- [6. Impression management](#6-impression-management)
+- [7. Pre-flight checklist](#7-pre-flight-checklist-for-wednesday-morning)
+- [Appendix A — KPI Definition Contract](#appendix-a--kpi-definition-contract)
+- [Appendix B — RAID and Decision Log](#appendix-b--raid-and-decision-log)
+- [Appendix C — KPI Decision Rights](#appendix-c--kpi-decision-rights)
+- [Appendix D — KPI Evidence Pack](#appendix-d--kpi-evidence-pack)
+- [Appendix E — Minimum KPI Definition Lifecycle](#appendix-e--minimum-kpi-definition-lifecycle)
+- [Appendix F — Proposed Change Safety and Acceptance Plan](#appendix-f--proposed-change-safety-and-acceptance-plan)
+- [Appendix G — AI/Data Handling and Scope Guardrails](#appendix-g--aidata-handling-and-scope-guardrails)
+  - [AI/data handling](#aidata-handling)
+  - [Scope stop-rules](#scope-stop-rules)
+- [Appendix H — KPI Elicitation Protocol](#appendix-h--kpi-elicitation-protocol-for-fragmented-evidence)
+  - [Establish the decision](#1-establish-the-decision-before-discussing-data)
+  - [Case clinic](#2-run-a-case-clinic-with-readable-evidence)
+  - [Testable components](#3-make-every-material-component-testable)
+  - [DQ classification](#4-treat-data-quality-as-a-repeatable-classification-problem)
+  - [Clinic outcomes](#5-finish-each-clinic-with-one-of-four-outcomes)
+- [Appendix I — Mapping, Profiling, Variability, and Gold Deviation Artifacts](#appendix-i--mapping-profiling-variability-and-gold-deviation-artifacts)
+  - [I.1 Mapping sheet](#i1-source-to-target-mapping-evidence-sheet)
+  - [I.2 Profiling request](#i2-profiling-request-to-the-data-engineer)
+  - [I.3 Variation matrix](#i3-country-and-source-variation-matrix)
+  - [I.4 Gold deviation register](#i4-gold-deviation-register)
+
 ---
 
 ## 1. Role design — use specialist capacity deliberately
@@ -19,12 +56,12 @@ This embed has complementary roles: the Data Architect concentrates on business 
 
 **Architectural contribution:** dimensional modeling (star schema, conformed dimensions, Kimball-style Gold layer) is technology-agnostic and transfers directly into a Databricks Gold-layer design. The preparation target is a common working vocabulary for productive architecture conversations: Bronze/Silver/Gold, Unity Catalog, Lakeflow, Metric Views, Genie, and the implementation decisions that should be verified with the Data Engineer.
 
-**How to use the companion technical reference:** this playbook tells you what to do and deliver; [Databricks_Data_Modeling_Playbook.md](Databricks_Data_Modeling_Playbook.md) provides the detailed options when the walkthrough raises a modeling, reconciliation, Lakeflow, or future-Discovery question. Do not duplicate its technical research here. Use its routing guide to get to the right section, then record the chosen pattern and evidence in the KPI contract and decision log below.
+**How to use the companion technical reference:** this playbook tells you what to do and deliver; the [Databricks Lakehouse Data Modeling — Playbook](<Databricks_Data_Modeling_Playbook.md>) provides the detailed options when the walkthrough raises a modeling, reconciliation, Lakeflow, or future-Discovery question. Do not duplicate its technical research here. Use [How to use this reference during the Basware embed](<Databricks_Data_Modeling_Playbook.md>) to get to the right section, then record the chosen pattern and evidence in [Appendix A — KPI Definition Contract](#appendix-a--kpi-definition-contract) and [Appendix B — RAID and Decision Log](#appendix-b--raid-and-decision-log).
 
 **Working Databricks context for the engagement** (target for Tuesday night):
 - Bronze/Silver/Gold in Delta Lake terms, Unity Catalog namespacing (catalog.schema.table), Delta Live Tables vs. plain notebooks, Databricks SQL Warehouses, and what Genie / Metric Views actually are (Basware's presale conversation already floated these as the semantic-layer tool — you should be able to discuss their fit without deep hands-on experience).
-- Use your own Snowflake↔Databricks cheat sheet as a live reference during meetings — don't hide it, a data architect cross-walking terminology in real time reads as rigor, not weakness.
-- Internal flag (never say this to Basware): the presale risk notes already question whether Metric Views/Genie are mature enough for Basware's actual business-logic complexity. If that risk surfaces during your walkthrough, note it in your internal findings — don't assert it to the client as fact, validate it against what you actually see.
+- Use the [Snowflake ↔ Databricks terminology cheat sheet](<Snowflake_Databricks_CheatSheet.md>) as a live reference during meetings — don't hide it, a data architect cross-walking terminology in real time reads as rigor, not weakness.
+- Internal flag (never say this to Basware): the presale risk notes already question whether Metric Views/Genie are mature enough for Basware's actual business-logic complexity. If that risk surfaces during your walkthrough, note it in your internal findings — don't assert it to the client as fact; validate it against what you actually see, using the [Unity Catalog Metric Views architecture brief](<Metric_Views_Brief.md>) as the evidence pack.
 
 ---
 
@@ -34,7 +71,52 @@ The KPI catalogue is an important starting point, not proof that a KPI is implem
 
 ### Working principle
 
-Business stakeholders should not be asked to interpret raw records unaided. The architecture/engineering pair prepares a small, readable evidence pack; business validates business meaning, scenarios, and exceptions; source owners validate field lifecycle and semantics; engineering validates implementability. Use **Appendix H** for the protocol and **Appendix I** for the evidence artifacts.
+Business stakeholders should not be asked to interpret raw records unaided. The architecture/engineering pair prepares a small, readable evidence pack; business validates business meaning, scenarios, and exceptions; source owners validate field lifecycle and semantics; engineering validates implementability. Use [Appendix H — KPI Elicitation Protocol for Fragmented Evidence](#appendix-h--kpi-elicitation-protocol-for-fragmented-evidence) for the protocol and [Appendix I — Mapping, Profiling, Variability, and Gold Deviation Artifacts](#appendix-i--mapping-profiling-variability-and-gold-deviation-artifacts) for the evidence artifacts.
+
+### KPI development workflow
+
+This is the minimum definition lifecycle in [Appendix E — Minimum KPI Definition Lifecycle](#appendix-e--minimum-kpi-definition-lifecycle), executed with the elicitation protocol in [Appendix H — KPI Elicitation Protocol for Fragmented Evidence](#appendix-h--kpi-elicitation-protocol-for-fragmented-evidence). The selected KPI is the worked example; the same loop is the process recommendation for Cresco.
+
+```mermaid
+flowchart TD
+  catalogue["Documented KPI catalogue"] --> propose["1. Propose: decision, owner, intended use"]
+  propose --> lock["Kickoff: lock KPI and named decision rights"]
+  lock --> contract["KPI Definition Contract"]
+
+  contract --> pack["2. Evidence: lineage, mapping, profiling, redacted journeys"]
+  pack --> clinic["Case clinic: normal / exception / country-source variant"]
+
+  clinic --> biz["Business: outcomes and exceptions"]
+  clinic --> src["Source owner: field lifecycle and semantics"]
+  clinic --> eng["Data Engineer: availability and implementability"]
+  clinic --> da["Data Architect: grain, lineage, recommendation"]
+
+  biz --> classify["Make each formula component testable"]
+  src --> classify
+  eng --> classify
+  da --> classify
+
+  classify --> status{"Clinic outcome"}
+
+  status -->|"Confirmed rule"| specify["5. Specify or implement Gold, metric, controls"]
+  status -->|"Interim rule"| interim["Named assumption, owner, expiry"]
+  status -->|"Decision required"| raid["4. Decide: RAID log, owner, due date"]
+  status -->|"Discovery item"| discovery["Out of SOW: scoped next-step Discovery"]
+
+  raid --> ownerDecide["Accountable owner decides or escalates"]
+  ownerDecide --> specify
+  interim --> specify
+
+  specify --> safety["Change safety and acceptance plan"]
+  safety --> validate["6. Validate: control totals, edge cases, variance"]
+  validate --> version["7. Version and communicate"]
+  version --> summary["Walkthrough summary: confirmed / hypothesis / pending"]
+
+  classify -.-> review["3. Review: business, source, BI, engineering"]
+  review --> status
+```
+
+Roles: the Data Architect recommends and keeps the contract; Basware owners decide. Do not ask business to interpret raw extracts. Do not rebuild Gold in this SOW; record deviations and a staged convergence path.
 
 ### What success looks like for the selected KPI
 
@@ -59,16 +141,16 @@ You have two working days before Wednesday's kickoff. Spend them on things that 
 - [ ] **Chase the KPI workbook now, don't wait for kickoff.** The SOW says the KPI semantic workbook (Overview / Entity Catalogue / Source System Map / KPI Relationships) and the 18 KPI design pages "will be made available at kickoff" — email Kirkland today asking to get read access *before* Wednesday so Tuesday can be spent pre-reading instead of Wednesday being your first look.
 - [ ] **Push to pre-select the KPI.** Officially "the Cresco team will agree the specific KPI during week 1," but nothing stops you proposing one now. Strong case for **ARR** specifically: it's the one with a known, documented failure (the ARR logic error caught late in build) — you already have the story, the "5 Whys" root-cause framing is pre-built from the pitch deck, and fixing/explaining it directly reinforces the exact narrative that sold the bigger Discovery phase. If ARR is already "done" and off-limits, second choice: whichever of the 16 backlog KPIs touches Contract or Customer, since that's where the two named ambiguities live.
 - [ ] **Chase access provisioning today**, not Wednesday morning. Databricks workspace, source control, Confluence (Cresco Design Stream) — access delays are the single most likely thing to eat your week 1. Ask Kirkland directly who owns provisioning and when it kicks off.
-- [ ] **Databricks speed-run (2–3 hrs, AI-assisted).** Use Claude/Cursor as a tutor framed around what you already know: "explain Unity Catalog to someone who knows Snowflake RBAC and Snowflake namespacing cold." Do the same for Delta Live Tables vs. notebooks, and for Genie/Metric Views. Update your cheat sheet with anything new.
+- [ ] **Databricks speed-run (2–3 hrs, AI-assisted).** Use Claude/Cursor as a tutor framed around what you already know: "explain Unity Catalog to someone who knows Snowflake RBAC and Snowflake namespacing cold." Do the same for Delta Live Tables vs. notebooks, and for Genie/Metric Views. Update the [Snowflake ↔ Databricks terminology cheat sheet](<Snowflake_Databricks_CheatSheet.md>) with anything new.
 - [ ] **Re-read your own presale trail** (memory, intro-call notes, presale risk notes, discovery questions, the pitch deck) so you don't contradict what N-iX already told Basware. In particular: the pitch already named the two ambiguities, the ARR incident, and the "design first, build once" pitch — stay consistent with that language throughout.
 
 ### Tuesday Aug 25
-- [ ] **Build the KPI walkthrough template now**, so Wednesday–Friday is pure listening/filling, not template design. Start with the **KPI Definition Contract** in **Appendix A**, then add source-to-Gold lineage, current Gold implementation, known gaps/ambiguities, and open questions. Draft it as a living document you fill in real time in front of stakeholders — visible artifact-building signals exactly the discipline N-iX is selling ("define before build").
-- [ ] **Prepare the KPI elicitation pack in Appendix H and the evidence artifacts in Appendix I.** Pre-select three business scenarios the KPI must handle (normal, exception, and country/source variant), a short profiling request for the Data Engineer, and a source-to-target mapping sheet. This makes the first workshop evidence-led without asking business stakeholders to interpret raw records.
+- [ ] **Build the KPI walkthrough template now**, so Wednesday–Friday is pure listening/filling, not template design. Start with [Appendix A — KPI Definition Contract](#appendix-a--kpi-definition-contract), then add source-to-Gold lineage, current Gold implementation, known gaps/ambiguities, and open questions. Draft it as a living document you fill in real time in front of stakeholders — visible artifact-building signals exactly the discipline N-iX is selling ("define before build").
+- [ ] **Prepare the KPI elicitation pack in [Appendix H — KPI Elicitation Protocol for Fragmented Evidence](#appendix-h--kpi-elicitation-protocol-for-fragmented-evidence) and the evidence artifacts in [Appendix I — Mapping, Profiling, Variability, and Gold Deviation Artifacts](#appendix-i--mapping-profiling-variability-and-gold-deviation-artifacts).** Pre-select three business scenarios the KPI must handle (normal, exception, and country/source variant), a short profiling request ([Appendix I — Profiling request to the Data Engineer](#i2-profiling-request-to-the-data-engineer)), and a source-to-target mapping sheet ([Appendix I — Source-to-target mapping evidence sheet](#i1-source-to-target-mapping-evidence-sheet)). This makes the first workshop evidence-led without asking business stakeholders to interpret raw records.
 - [ ] **Pre-draft hypotheses for the two named ambiguities** so the workshops are validation, not discovery from zero:
   - *Contract End Date* — three candidate sources of truth (SalesCloud, M-Files, CPQ). Before Wednesday, write down the obvious question set: which system is contractually authoritative, do the three ever disagree today, has anyone measured how often, what's the business process that updates each one and in what order.
   - *Partner SAP ID hierarchy* — write down: is this a parent/child rollup problem (reseller → end customer), where does the hierarchy actually live today (SAP master data vs. somewhere else), what breaks downstream when it's wrong (likely revenue/KPI misattribution across the hierarchy).
-- [ ] **Start the two running documents you'll keep open all two weeks:** a live glossary ("customer," "contract," and whatever else comes up) and a RAID/**decision** log using **Appendix B**. These aren't busywork — they *are* the "definition process improvement" deliverable if you populate them well, so start them today, empty is fine, structure is what matters.
+- [ ] **Start the two running documents you'll keep open all two weeks:** a live glossary ("customer," "contract," and whatever else comes up) and a RAID/**decision** log using [Appendix B — RAID and Decision Log](#appendix-b--raid-and-decision-log). These aren't busywork — they *are* the "definition process improvement" deliverable if you populate them well, so start them today, empty is fine, structure is what matters.
 - [ ] **Sync with your Data Engineer colleague.** Confirm the division of labor above, agree on shared vocabulary (you don't want to contradict each other in a room), and agree who says what in the kickoff.
 - [ ] **Logistics:** calendar invites, timezone overlap check (Finland/UK/India — Cresco team is distributed), Basware Slack/Teams access request, confirm the AI-tooling ground rules apply to this SOW too (the bigger SOW draft has an AI-tooling clause — confirm Cursor/Claude/Gemini use is explicitly fine here, not assumed).
 
@@ -76,24 +158,60 @@ You have two working days before Wednesday's kickoff. Spend them on things that 
 
 ## 3. Week 1 (Wed Aug 26 – Fri Aug 28, continuing Mon Aug 31)
 
+Week 1 is onboarding and evidence: lock one KPI, run the case clinic, and leave a stand-alone walkthrough summary. Monday 31 Aug is the bridge into Week 2 if Friday's readout is not the last working day of this block.
+
+```mermaid
+flowchart TD
+  wed["Wed 26 Aug — Kickoff"] --> lock["Lock selected KPI today"]
+  wed --> date["Calendar the interim readout date"]
+  wed --> sme["Name SMEs and book Week 2 sign-off"]
+  wed --> rights["Agree KPI Decision Rights"]
+  wed --> org["Map Cresco org and contacts"]
+
+  lock --> onboard["Thu 27 – Fri 28 Aug — KPI onboarding"]
+  date --> onboard
+  sme --> onboard
+  rights --> onboard
+  org --> onboard
+
+  onboard --> interviews["Business definition interviews"]
+  onboard --> lineage["Source-to-Gold lineage and current Gold review"]
+  onboard --> clinic["Case clinic: 3 scenarios + redacted journeys"]
+  onboard --> code["AI-assisted review of the real Databricks logic"]
+  onboard --> daily["Daily glossary and RAID / decision log"]
+
+  interviews --> draft["Walkthrough summary: rough by Thu night"]
+  lineage --> draft
+  clinic --> draft
+  code --> draft
+  daily --> draft
+
+  draft --> fri["Fri 28 Aug — Interim readout"]
+  fri --> summary["KPI walkthrough summary: definition, lineage, implementation, evidence, named decisions"]
+  summary --> labels["Label every conclusion: confirmed / hypothesis / illustrative / pending"]
+  labels --> weekend["Weekend 29–30 Aug — regroup"]
+  weekend --> tidy["Catch up Databricks, tidy logs, pre-draft Week 2 structure"]
+  tidy --> week2["Mon 31 Aug — start Week 2"]
+```
+
 **Wed Aug 26 — Kickoff.**
 - [ ] Confirm scope, access, and points of contact (per SOW governance section) — but also use this meeting to close three specific open items instead of leaving them vague:
   1. **Lock the KPI** for your walkthrough today, not later in the week.
   2. **Resolve the interim-readout date conflict in the SOW itself** — the deliverables table says the interim readout is due "end of week 1," but the timeline narrative places it "mid-week" under week 2. Don't let this slip through unresolved; ask directly and get a date on the calendar.
   3. Identify the actual **business SMEs** who can sign off on definitions (you'll need them by week 2, book them now while calendars are open).
 - [ ] Learn the real org chart fast: who on Cresco is analytics engineer vs. BI engineer vs. the internal senior data engineer mentioned in the bigger SOW, and how Kirkland/Redekar/Schiwitz relate to each other and to the team day-to-day.
-- [ ] **Agree decision rights for the selected KPI** using **Appendix C**. Put names and decision dates in the log before leaving kickoff.
+- [ ] **Agree decision rights for the selected KPI** using [Appendix C — KPI Decision Rights](#appendix-c--kpi-decision-rights). Put names and decision dates in the log before leaving kickoff.
 
 **Thu Aug 27 – Fri Aug 28 — KPI onboarding.**
-- [ ] Business definition interview(s), source-to-Gold lineage walkthrough, current Gold implementation review — fill your template live. Build the **KPI evidence pack** in **Appendix D** as you go.
-- [ ] **Run a KPI case clinic, not a generic requirements interview.** Present the three prepared business scenarios and a readable, safely redacted record journey. Ask business to validate the outcome and exceptions; ask source owners to validate field lifecycle; ask the Data Engineer to profile the relevant source fields and mapping coverage. Capture results in Appendices H and I.
+- [ ] Business definition interview(s), source-to-Gold lineage walkthrough, current Gold implementation review — fill your template live. Build [Appendix D — KPI Evidence Pack](#appendix-d--kpi-evidence-pack) as you go.
+- [ ] **Run a KPI case clinic, not a generic requirements interview.** Present the three prepared business scenarios and a readable, safely redacted record journey. Ask business to validate the outcome and exceptions; ask source owners to validate field lifecycle; ask the Data Engineer to profile the relevant source fields and mapping coverage. Capture results in [Appendix H — KPI Elicitation Protocol for Fragmented Evidence](#appendix-h--kpi-elicitation-protocol-for-fragmented-evidence) and [Appendix I — Mapping, Profiling, Variability, and Gold Deviation Artifacts](#appendix-i--mapping-profiling-variability-and-gold-deviation-artifacts).
 - [ ] **Use AI on the actual Databricks code**, not just for orientation: point Claude/Cursor at the real notebooks/dbt/DLT logic behind this KPI and have it explain the pipeline back to you. This is the highest-leverage use of AI available this week: it accelerates architecture review of unfamiliar Spark/SQL and lets the Data Engineer spend specialist capacity on implementation and delivery.
 - [ ] Populate the glossary and RAID log every day, don't batch it for Friday night.
 - [ ] Draft the **KPI walkthrough summary** incrementally — have a rough version by Thursday night, polished by Friday, not started Friday afternoon.
 
 **Fri Aug 28 (or wherever the kickoff lands the date) — Interim readout + KPI walkthrough summary due.**
 - [ ] Structure the readout the way the N-iX pitch deck already framed things for Basware — "what we heard / our point of view," "where the gap is" style tables. Basware has already seen and responded to that framing in the sales deck; reusing it signals the sales pitch and the delivery are the same substance, not a bait-and-switch.
-- [ ] Deliver the KPI walkthrough summary: business definition, lineage, current implementation, evidence pack, and named decisions — in enough detail that it stands alone (this is literally the SOW's acceptance bar: "enough detail for the Cresco team to act without further clarification"). Use the **Appendix D** contents and mark every conclusion as **confirmed**, **hypothesis to validate**, **illustrative pattern**, or **decision pending**; the companion Data Modeling Playbook defines these labels.
+- [ ] Deliver the KPI walkthrough summary: business definition, lineage, current implementation, evidence pack, and named decisions — in enough detail that it stands alone (this is literally the SOW's acceptance bar: "enough detail for the Cresco team to act without further clarification"). Use [Appendix D — KPI Evidence Pack](#appendix-d--kpi-evidence-pack) and mark every conclusion as **confirmed**, **hypothesis to validate**, **illustrative pattern**, or **decision pending**; the companion [Evidence and claim convention](<Databricks_Data_Modeling_Playbook.md>) defines these labels.
 
 **Weekend Aug 29–30 — your regroup buffer.** Use it to: catch up on anything Databricks-specific that came up and you didn't fully follow, tidy the glossary/RAID log, and pre-draft the structure of the week-2 deliverables (definition-process recommendations, Gold-layer improvement list) so week 2 is refinement, not a blank page.
 
@@ -101,15 +219,41 @@ You have two working days before Wednesday's kickoff. Spend them on things that 
 
 ## 4. Week 2 (Mon Aug 31 – Fri Sep 4)
 
+Week 2 turns the walkthrough into recommendations, named resolution paths, and a closing readout that points at Discovery. Do not rebuild Gold; demonstrate the process with the selected KPI.
+
+```mermaid
+flowchart TD
+  start["Mon 31 Aug — Week 2 starts from the walkthrough"] --> split["Turn evidence into two outputs"]
+
+  split --> process["Definition-process recommendations: Minimum KPI Definition Lifecycle as a worked example"]
+  split --> gold["Gold-layer improvements: only gaps the walkthrough surfaced"]
+
+  start --> ambiguities["Named SOW ambiguities — non-negotiable"]
+  ambiguities --> ced["Contract End Date: SalesCloud vs M-Files vs CPQ authority or next decision step"]
+  ambiguities --> sap["Partner SAP ID: classify hierarchy / reconciliation / matching; least-complex valid path"]
+
+  gold --> deviations["Triage the two custom-KPI Gold implementations: pattern, reason, consumer impact, smallest next action"]
+  process --> recs["Lightweight, adoptable process — no heavyweight BA framework"]
+  deviations --> recs
+  ced --> recs
+  sap --> recs
+
+  recs --> safety["Proposed Change Safety and Acceptance Plan"]
+  safety --> joint["Sync with Data Engineer: one joint root-cause story"]
+  joint --> readout["Joint summary + closing readout in N-iX client template"]
+  readout --> next["Explicit next step: 5-week Discovery SOW or evidence-informed variant"]
+  next --> qa["Self-review: enough detail to act without further N-iX clarification"]
+```
+
 - [ ] Turn the KPI walkthrough into two concrete outputs:
-  1. **Definition process improvement recommendations** — keep this lightweight and adoptable. Cresco has no dedicated BA support and a small team (5 internal + 3 contractors); don't propose a heavyweight governance framework they can't sustain. Demonstrate the minimum definition lifecycle in **Appendix E** with the selected KPI.
+  1. **Definition process improvement recommendations** — keep this lightweight and adoptable. Cresco has no dedicated BA support and a small team (5 internal + 3 contractors); don't propose a heavyweight governance framework they can't sustain. Demonstrate the [Appendix E — Minimum KPI Definition Lifecycle](#appendix-e--minimum-kpi-definition-lifecycle) with the selected KPI.
   2. **Gold Layer data model improvements** — entity structure, relationships, domain alignment, framed around what the KPI walkthrough actually surfaced (don't invent a full canonical model from scratch in a week; point at the specific gaps you saw).
-- [ ] **Triage the two existing custom-KPI Gold implementations** using Appendix I's deviation register. Identify the recurring pattern, the reason it was needed, consumer impact, and the smallest convergence action; recommend a staged path rather than refactoring both implementations in this SOW.
+- [ ] **Triage the two existing custom-KPI Gold implementations** using [Appendix I — Gold deviation register](#i4-gold-deviation-register). Identify the recurring pattern, the reason it was needed, consumer impact, and the smallest convergence action; recommend a staged path rather than refactoring both implementations in this SOW.
 - [ ] **Explicit resolution path for both named ambiguities** — these are called out by name in the SOW, treat them as non-negotiable deliverables:
   - Contract End Date (SalesCloud vs. M-Files vs. CPQ) — state which system should be authoritative and why, or the concrete next step to decide if you can't resolve it outright in two weeks.
   - Partner SAP ID hierarchy — same treatment.
-- [ ] **Use the least-complex valid path for the SAP partner issue.** First decide whether it is a deterministic hierarchy/role mapping, a known-entity source reconciliation problem, or a genuine entity-matching problem. Use the detailed decision pattern in the Data Modeling Playbook §7; do not recommend probabilistic matching merely because several systems are involved.
-- [ ] **Add a safety and acceptance plan for any proposed change** using **Appendix F**. Reference Data Modeling Playbook §§2A and 4 for technical control patterns.
+- [ ] **Use the least-complex valid path for the SAP partner issue.** First decide whether it is a deterministic hierarchy/role mapping, a known-entity source reconciliation problem, or a genuine entity-matching problem. Use the detailed decision pattern in [7. Entity resolution — First classify the problem](<Databricks_Data_Modeling_Playbook.md>); do not recommend probabilistic matching merely because several systems are involved.
+- [ ] **Add a safety and acceptance plan for any proposed change** using [Appendix F — Proposed Change Safety and Acceptance Plan](#appendix-f--proposed-change-safety-and-acceptance-plan). Reference [2A. Pipelines best practices](<Databricks_Data_Modeling_Playbook.md>) and [4. Data Quality & Reconciliation Toolkit](<Databricks_Data_Modeling_Playbook.md>) for technical control patterns.
 - [ ] Sync with the Data Engineer's dev-lifecycle findings for the **joint summary** — look for one or two places where his platform observations and your model observations point at the same root cause (e.g., "KPI-by-KPI builds happened because there was no shared model *and* no branching discipline to catch it" — a joint story is more persuasive than two parallel reports).
 - [ ] Build the **joint summary + closing readout** in the approved N-iX client-deliverable template — don't hand over a plain memo. Reuse the pitch deck's visual language (Assess → Stabilize → Build → Scale, "Where the Gap Is" tables) so the closing readout reads as a natural continuation of the sales narrative.
 - [ ] **End the joint summary with an explicit next step**, not an open question. Since the 5-week Discovery SOW ($58,880) is already drafted and priced, the joint summary should point straight at it (or a variant informed by what you actually found) — this is the single highest-leverage move for turning "impressed" into "prolonged engagement." Don't make Basware ask what's next; tell them.
@@ -119,7 +263,7 @@ You have two working days before Wednesday's kickoff. Spend them on things that 
 
 ## 5. AI leverage checklist — use it everywhere it saves time or raises quality
 
-**Apply the AI/data-handling and scope guardrails in Appendix G** before using AI with Basware materials.
+**Apply the AI/data-handling and scope guardrails in [Appendix G — AI/Data Handling and Scope Guardrails](#appendix-g--aidata-handling-and-scope-guardrails)** before using AI with Basware materials.
 
 - Reading unfamiliar Databricks/Spark/dbt/DLT code and having it explained back in architecture terms, so specialist engineering time stays focused on implementation and delivery.
 - Nightly: turning raw interview notes into polished glossary entries, lineage descriptions, and the walkthrough summary draft.
@@ -132,7 +276,7 @@ You have two working days before Wednesday's kickoff. Spend them on things that 
 
 ## 6. Impression management
 
-**Scope discipline is part of the impression.** Apply the stop-rules in **Appendix G**: make the selected KPI excellent, leave an explicit resolution path for the named open items, and frame broader options as next-step Discovery work.
+**Scope discipline is part of the impression.** Apply the stop-rules in [Appendix G — AI/Data Handling and Scope Guardrails](#appendix-g--aidata-handling-and-scope-guardrails): make the selected KPI excellent, leave an explicit resolution path for the named open items, and frame broader options as next-step Discovery work.
 
 - Open the KPI conversation already knowing the ARR story and the two named ambiguities. Informed questions from minute one show that the architecture stream is prepared to focus on business meaning, lineage, and decisions while the engineering stream handles platform mechanics.
 - Keep the internal presale risk notes (Metric Views/Genie doubts, team-adoption risk, "is this really an architecture problem or an analytical-maturity problem") private. If they turn out to be real, surface them diplomatically and hedged — validate, don't assert — consistent with how you've handled client communication so far.
@@ -145,8 +289,8 @@ You have two working days before Wednesday's kickoff. Spend them on things that 
 
 - [ ] KPI candidate proposed (ARR first choice)
 - [ ] Access requests sent (Databricks, repo, Confluence, Slack/Teams)
-- [ ] KPI Definition Contract / walkthrough template ready
-- [ ] Glossary + RAID/decision log docs created (empty is fine)
+- [ ] [Appendix A — KPI Definition Contract](#appendix-a--kpi-definition-contract) / walkthrough template ready
+- [ ] Glossary + [Appendix B — RAID and Decision Log](#appendix-b--raid-and-decision-log) docs created (empty is fine)
 - [ ] Hypotheses drafted for Contract End Date and SAP ID hierarchy
 - [ ] Databricks terms speed-run done (Unity Catalog, Delta Lake, DLT, Genie/Metric Views)
 - [ ] Synced with Data Engineer colleague on division of labor and kickoff talking points
@@ -169,7 +313,7 @@ Create one contract for the selected KPI. It is the working artifact for the wal
 | Source-of-record by attribute | Authoritative source for every disputed attribute, including Contract End Date if relevant. | Contract End Date: **decision pending** between M-Files, CPQ, and SalesCloud; contract amount/currency/product: _confirm source and fallback rule_. |
 | Gold representation | Gold entities, fields, relationships, and metric/report implementation. | `fact_subscription` joined to `dim_contract`, `dim_customer`, `dim_product`, `dim_partner`, and calendar; served through the approved ARR metric/report definition. |
 | Freshness and consumers | Update cadence, expected latency, dependent reports, and downstream owners. | Monthly close plus agreed intra-month refresh; consumers: executive ARR dashboard, finance planning, and commercial reporting; owners: _name each_. |
-| Assumptions and open decisions | Link to the relevant Appendix B entries. | Link to Contract End Date authority and SAP partner-attribution decisions; state the interim rule, if a report must run before approval. |
+| Assumptions and open decisions | Link to the relevant [Appendix B — RAID and Decision Log](#appendix-b--raid-and-decision-log) entries. | Link to Contract End Date authority and SAP partner-attribution decisions; state the interim rule, if a report must run before approval. |
 | Validation | Control totals, representative edge cases, variance tolerance, and expected results. | Reconcile to approved finance control total; test renewals, cancellations, amendments, reseller deals, overlapping contracts, missing end dates, and currency conversion; agree allowable variance. |
 | Approval and version | Decision owner, approvers, date, definition version, and change summary. | Business KPI owner approves; source and BI owners review; `ARR v1.0`, approved date _TBD_; record the change from prior calculation, if any. |
 
@@ -188,7 +332,7 @@ Confirm named people for these roles in kickoff. The Data Architect recommends; 
 
 | Role | Accountable for | Required contribution |
 |---|---|---|
-| Business KPI owner | Approving business definition, intended use, materiality, and acceptance | Signs the Definition Contract. |
+| Business KPI owner | Approving business definition, intended use, materiality, and acceptance | Signs [Appendix A — KPI Definition Contract](#appendix-a--kpi-definition-contract). |
 | Source-system owner | Meaning, lifecycle, quality, and latency of source attributes | Confirms or disputes source-of-record proposals. |
 | Cresco Analytics / BI owner | Consumer semantics and report impact | Confirms report compatibility and validation cases. |
 | Cresco Data / Analytics Engineer | Gold implementation, tests, controls, and release feasibility | Confirms implementation and rollback plan. |
@@ -205,7 +349,7 @@ The Friday walkthrough summary must contain or link to each applicable item belo
 - Grain, key, time semantics, and source-to-target mapping.
 - Sample reconciliation results: population size, disagreement categories/counts, and representative records or safely redacted examples.
 - Current data-quality/control checks and observed gaps.
-- Open decisions, owner, due date, and interim assumption from Appendix B.
+- Open decisions, owner, due date, and interim assumption from [Appendix B — RAID and Decision Log](#appendix-b--raid-and-decision-log).
 - Existing versus proposed definition/model change, affected consumers, and recommended action.
 - Clear status labels: **confirmed**, **hypothesis to validate**, **illustrative pattern**, or **decision pending**.
 
@@ -215,8 +359,8 @@ Demonstrate this lifecycle with the selected KPI. The handover recommendation is
 
 1. **Propose** — business owner states the intended KPI and decision it supports.
 2. **Evidence** — collect lineage, source semantics, current implementation, and reconciliation evidence.
-3. **Review** — business, source, BI, and engineering owners review the Definition Contract and options.
-4. **Decide** — record the approval, interim assumption, or escalation in Appendix B.
+3. **Review** — business, source, BI, and engineering owners review [Appendix A — KPI Definition Contract](#appendix-a--kpi-definition-contract) and options.
+4. **Decide** — record the approval, interim assumption, or escalation in [Appendix B — RAID and Decision Log](#appendix-b--raid-and-decision-log).
 5. **Specify or implement** — define the required Gold-model, metric, and pipeline/control change.
 6. **Validate** — execute agreed examples, control totals, and variance checks.
 7. **Version and communicate** — version the definition, record consumer impact, and publish the approved result in the team’s existing workbook/documentation location.
@@ -250,7 +394,7 @@ Complete this for any recommendation that may alter a KPI, Gold entity, or pipel
 - Do not rebuild Gold or re-platform integrations within this SOW.
 - Do not initiate a vendor/tool evaluation unless selected-KPI evidence shows it is material; frame such work as a Discovery option.
 - Do not call an ambiguity an architecture defect before evidence establishes whether it is a business definition, source process, data-quality, hierarchy, or implementation issue.
-- Do not recommend probabilistic entity matching before Appendix C owners and the Data Modeling Playbook §7 classification path establish that deterministic options are inadequate.
+- Do not recommend probabilistic entity matching before [Appendix C — KPI Decision Rights](#appendix-c--kpi-decision-rights) owners and the [7. Entity resolution — First classify the problem](<Databricks_Data_Modeling_Playbook.md>) path establish that deterministic options are inadequate.
 
 ## Appendix H — KPI Elicitation Protocol for Fragmented Evidence
 
@@ -265,7 +409,7 @@ Ask the business KPI owner:
 - What result would be surprising or unacceptable to Finance/commercial leadership?
 - Which three business situations must it handle correctly: normal case, exception, and country/source variant?
 
-Record the answers in Appendix A. Business validates outcomes and exceptions—not column names or raw records.
+Record the answers in [Appendix A — KPI Definition Contract](#appendix-a--kpi-definition-contract). Business validates outcomes and exceptions—not column names or raw records.
 
 ### 2. Run a case clinic with readable evidence
 
@@ -282,7 +426,7 @@ Do not ask business to interpret unprepared raw extracts. If a record is needed,
 
 ### 3. Make every material component testable
 
-For each formula term and material rule, record: business wording, grain, candidate source field, transformation, data-quality risk, country/source applicability, evidence status, owner, and a test case. Use Appendix I's mapping sheet. “Documented” becomes **confirmed** only when the business outcome, source semantics, and implementation path agree.
+For each formula term and material rule, record: business wording, grain, candidate source field, transformation, data-quality risk, country/source applicability, evidence status, owner, and a test case. Use [Appendix I — Source-to-target mapping evidence sheet](#i1-source-to-target-mapping-evidence-sheet). “Documented” becomes **confirmed** only when the business outcome, source semantics, and implementation path agree.
 
 ### 4. Treat data quality as a repeatable classification problem
 

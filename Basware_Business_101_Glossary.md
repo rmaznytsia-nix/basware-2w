@@ -1,6 +1,6 @@
 **INTERNAL / PERSONAL — WORKING REFERENCE, NOT FOR CLIENT DISTRIBUTION**
 
-# Basware Business 101 + Glossary (for the Data Architect, no BA on the team)
+# Basware Business 101 + Glossary
 
 Why this exists: the bigger 5-week Discovery SOW has a dedicated Business/Data Analyst role to carry exactly this knowledge. This 2-week embed doesn't. That job falls on you by default — not to become a Basware product expert, but to have enough domain fluency that you can tell, unprompted, when a business definition is off, ask the right follow-up, and not need someone to explain what an "order form" or "gross margin" means mid-workshop.
 
@@ -11,6 +11,21 @@ Two domains matter here and they are *not the same thing* — keep them separate
 
 Conflating the two is the single easiest way to sound like you don't know the domain. A "touchless processing rate" question is about domain #1 (their product). A "Contract End Date" question is about domain #2 (their own subscription business).
 
+## Contents
+
+- [1. Basware, the company — fast facts](#1-basware-the-company--fast-facts)
+- [2. Product domain 101](#2-product-domain-101-the-thing-basware-sells--context-not-your-kpi-subject)
+- [3. Corporate KPI domain 101](#3-corporate-kpi-domain-101-this-is-what-your-engagement-actually-measures)
+- [4. Why "Customer," "Contract," and "Partner" are genuinely ambiguous](#4-why-customer-contract-and-partner-are-genuinely-ambiguous-here)
+- [5. Working hypothesis: business terms → canonical Gold-layer entities](#5-working-hypothesis-business-terms--canonical-gold-layer-entities)
+- [6. Glossary — quick reference](#6-glossary--quick-reference)
+  - [Product / operational](#product--operational-domain)
+  - [Corporate / GTM KPI](#corporate--gtm-kpi-domain)
+  - [Data/architecture](#dataarchitecture-domain-your-own-vocabulary-included-for-completeness)
+- [7. Question bank](#7-question-bank--use-this-to-fill-the-ba-gap-in-workshops)
+- [8. Databricks technical toolkit — moved out](#8-databricks-technical-toolkit--moved-out)
+- [Sources](#sources)
+
 ---
 
 ## 1. Basware, the company — fast facts
@@ -18,7 +33,7 @@ Conflating the two is the single easiest way to sound like you don't know the do
 - Invoice Lifecycle Management (ILM) platform: governs every invoice from supplier submission through compliance validation, coding, matching, approval, fraud screening, payment, and archiving — across countries and ERPs, in one flow.
 - Core product lines: AP automation, e-invoicing network, e-procurement / procure-to-pay, compliance (continuous transaction controls, tax/e-invoicing mandates).
 - Scale: 6,500+ customers, 190+ countries (per Basware's own marketing).
-- Go-to-market is **not purely direct** — Basware sells substantially through a Value-Added Reseller (VAR) / channel partner network, alongside direct sales. This is the detail that explains why "partner SAP ID hierarchy" is a real, structural problem for them, not an edge case (see §4).
+- Go-to-market is **not purely direct** — Basware sells substantially through a Value-Added Reseller (VAR) / channel partner network, alongside direct sales. This is the detail that explains why "partner SAP ID hierarchy" is a real, structural problem for them, not an edge case (see [Why "Customer," "Contract," and "Partner" are genuinely ambiguous](#4-why-customer-contract-and-partner-are-genuinely-ambiguous-here)).
 - Recognized as a Leader in Forrester Wave (AP Invoice Automation) and Gartner Magic Quadrant (AP Applications).
 - Split organizationally into a Product org and an Enterprise org (Barrett Schiwitz's side) — the data platform you're working on sits in Enterprise.
 - 40-year milestone (Feb 2025): platform has processed 2 billion+ invoices and $10.1 trillion in total managed spend to date — useful scale color if it comes up, not a KPI itself.
@@ -65,7 +80,7 @@ The annualized value of active recurring subscription revenue. Formula (simplifi
 
 - **Cloud ARR Order Intake (bookings)** — confirmed as a real, named line item in Basware's own financial statements, distinct from ARR itself (ARR = the recurring-revenue base; order intake = new bookings added in the period). Historical reference point: EUR 17.1M for FY2021. If this is one of the 16, expect it to be built from CPQ/SalesCloud opportunity-close data, not from the same logic as ARR.
 - **New logo order intake** — a further split of order intake isolating genuinely new customers from renewals/expansion of existing ones (FY2021: new-logo intake grew ~36% YoY in Q4). Relevant if the 16 KPIs distinguish "growth from new customers" from "growth from existing ones."
-- **Reseller share of order intake** — Basware has explicitly reported this split (~18% of FY2021 order intake came through resellers). This is real, historical evidence — not speculation — that the partner/VAR attribution problem in §4 is materially significant, not an edge case.
+- **Reseller share of order intake** — Basware has explicitly reported this split (~18% of FY2021 order intake came through resellers). This is real, historical evidence — not speculation — that the partner/VAR attribution problem in [Why "Customer," "Contract," and "Partner" are genuinely ambiguous](#4-why-customer-contract-and-partner-are-genuinely-ambiguous-here) is materially significant, not an edge case.
 - **Adjusted EBITDA** — plausible candidate (common in SaaS earnings reporting, and Basware is a mature enough SaaS vendor to likely track it), but **not independently confirmed** in the sources checked here. Treat as an open hypothesis to validate against the KPI workbook, not a confirmed fact.
 
 **Considered and explicitly excluded from this candidate list** (surfaced by an AI-generated guess at Basware's 18 KPIs, checked and rejected): **LTV, CAC, and the LTV:CAC ratio** — plausible board-level SaaS metrics in general, but they require marketing-spend attribution data that doesn't obviously live in any of the four confirmed source systems (SalesCloud, CPQ, M-Files, SAP); likely out of scope for this specific data-architecture engagement even if Basware tracks them elsewhere. **An "NPS ~97.4%" figure** also surfaced — flagged as very likely wrong or conflated (NPS is a −100-to-+100 scale, not a percentage), don't reuse that number for anything.
@@ -139,7 +154,7 @@ Treat this as a draft to validate on the ground in week 1, not a finished model 
 | NRR (Net Revenue Retention) | Same base as GRR but including expansion (upsell/cross-sell); >100% = expanding faster than churning. Basware calls this **cloud net renewal rate** internally (104% FY2021). |
 | Cloud ARR Order Intake (bookings) | New cloud bookings added in a period — distinct from ARR itself. Confirmed real Basware line item (EUR 17.1M FY2021). |
 | New logo order intake | Order intake from genuinely new customers only, split out from renewal/expansion intake. |
-| Reseller share of order intake | % of order intake attributed to VAR/reseller-driven deals (~18% FY2021) — direct evidence the partner-attribution problem in §4 is material. |
+| Reseller share of order intake | % of order intake attributed to VAR/reseller-driven deals (~18% FY2021) — direct evidence the partner-attribution problem in [Why "Customer," "Contract," and "Partner" are genuinely ambiguous](#4-why-customer-contract-and-partner-are-genuinely-ambiguous-here) is material. |
 | Adjusted EBITDA | Plausible corporate KPI candidate — common in SaaS earnings reporting, **not independently confirmed** for Basware; validate against the KPI workbook. |
 | Churn | Loss of recurring revenue/customers over a period, from cancellation or non-renewal. |
 | CPQ (Configure-Price-Quote) | System generating price quotes/order forms with their own effective/end dates — commercial terms as quoted. |
@@ -172,7 +187,7 @@ Since there's no BA to run structured elicitation for you, borrow their toolkit:
 
 ## 8. Databricks technical toolkit — moved out
 
-The ranked reading list, do/don't, and the Databricks feature catalog (table types, modeling instruments, consumer integrations, conventions/templates, operations) now live in a separate companion file: **`Databricks_Data_Modeling_Playbook.md`**. This file stays focused on Basware's business domain; that one covers the technical toolkit you design the canonical model with.
+The ranked reading list, do/don't, and the Databricks feature catalog (table types, modeling instruments, consumer integrations, conventions/templates, operations) now live in the [Databricks Lakehouse Data Modeling Playbook](<Databricks_Data_Modeling_Playbook.md>). This file stays focused on Basware's business domain; that one covers the technical toolkit you design the canonical model with.
 
 ---
 

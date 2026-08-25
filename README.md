@@ -6,21 +6,21 @@ Working materials for a two-week Basware data-architecture engagement. The repos
 
 ## Start here
 
-1. Read the [engagement playbook](Basware_Engagement_Playbook.md) for the two-week plan, roles, workshop approach, and delivery artifacts.
-2. Use the [Basware business glossary](Basware_Business_101_Glossary.md) to align on the business, KPI, and data-domain vocabulary.
-3. Use the [data-modeling playbook](Databricks_Data_Modeling_Playbook.md) when making modeling, data-quality, lineage, or metric-definition decisions.
+1. Read the [engagement playbook](<Basware_Engagement_Playbook.md>) for the two-week plan, roles, workshop approach, and delivery artifacts.
+2. Use the [Basware business glossary](<Basware_Business_101_Glossary.md>) to align on the business, KPI, and data-domain vocabulary.
+3. Use the [data-modeling playbook](<Databricks_Data_Modeling_Playbook.md>) when making modeling, data-quality, lineage, or metric-definition decisions.
 
 
 
 ## Repository guide
 
 
-| Area                                  | Files                                                                                                                                                                                                                                                                                              | Purpose                                                                                                                 |
+| Area                                  | Documents                                                                                                                                                                                                                                                                                              | Purpose                                                                                                                 |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Engagement delivery                   | [Basware_Engagement_Playbook.md](Basware_Engagement_Playbook.md)                                                                                                                                                                                                                                   | Delivery sequence, workshop methods, and decision artifacts.                                                            |
-| Business context                      | [Basware_Business_101_Glossary.md](Basware_Business_101_Glossary.md)                                                                                                                                                                                                                               | Basware terminology for KPI and data-domain conversations.                                                              |
-| Databricks architecture and modeling  | [Databricks_Data_Modeling_Playbook.md](Databricks_Data_Modeling_Playbook.md), [databricks-azure-architecture-catchup.md](databricks-azure-architecture-catchup.md), [Databicks_innovations.md](Databicks_innovations.md), [Snowflake_Databricks_CheatSheet.md](Snowflake_Databricks_CheatSheet.md) | Architecture refresh, modeling patterns, platform capability research, and Snowflake-to-Databricks terminology mapping. |
-| Presentation and supporting artifacts | [Snowflake to Lakehouse Migration Assessment 5-23.pptx](Snowflake%20to%20Lakehouse%20Migration%20Assessment%205-23.pptx), [document_taxonomy.md](document_taxonomy.md)                                                                                                                             | Migration assessment deck and guidance for choosing document types.                                                     |
+| Engagement delivery                   | [Basware Embed — 2-Week Playbook](<Basware_Engagement_Playbook.md>)                                                                                                                                                                                                                                   | Delivery sequence, workshop methods, and decision artifacts.                                                            |
+| Business context                      | [Basware Business 101 + Glossary](<Basware_Business_101_Glossary.md>)                                                                                                                                                                                                                               | Basware terminology for KPI and data-domain conversations.                                                              |
+| Databricks architecture and modeling  | [Databricks Lakehouse Data Modeling Playbook](<Databricks_Data_Modeling_Playbook.md>), [Databricks on Azure — catch-up guide](<Databricks_on_Azure_Catchup.md>), [Databricks platform architecture changes, 2024–2026](<Databricks_Platform_Architecture_2024-2026.md>), [Unity Catalog Metric Views architecture brief](<Metric_Views_Brief.md>), [Snowflake ↔ Databricks terminology cheat sheet](<Snowflake_Databricks_CheatSheet.md>) | Architecture refresh, 2024–2026 platform changes, modeling patterns, metric-view fitness, and Snowflake-to-Databricks terminology mapping. |
+| Presentation and supporting artifacts | [Snowflake to Lakehouse Migration Assessment](<Snowflake%20to%20Lakehouse%20Migration%20Assessment%205-23.pptx>), [Document Taxonomy](<Document_Taxonomy.md>)                                                                                                                             | Migration assessment deck and guidance for choosing document types.                                                     |
 
 
 
@@ -34,12 +34,12 @@ The engagement is organized around making KPI definitions operational and audita
 - Profile source variation and record unresolved assumptions or Gold-layer deviations.
 - Build from Bronze ingestion through Silver cleaning to a Gold dimensional model and governed semantic metrics.
 
-The playbook includes templates for the KPI definition contract, RAID/decision log, evidence pack, mapping sheet, profiling request, variation matrix, and Gold deviation register.
+The [Basware Embed — 2-Week Playbook](<Basware_Engagement_Playbook.md>) includes templates for the [KPI definition contract](<Basware_Engagement_Playbook.md>), [RAID/decision log](<Basware_Engagement_Playbook.md>), [evidence pack](<Basware_Engagement_Playbook.md>), mapping sheet, profiling request, variation matrix, and Gold deviation register.
 
 ## Conventions
 
-- Keep confirmed facts, assumptions, illustrative patterns, and future-discovery options distinct, following the conventions in the modeling playbook.
+- Keep confirmed facts, assumptions, illustrative patterns, and future-discovery options distinct, following the [evidence and claim convention](<Databricks_Data_Modeling_Playbook.md>).
 - Maintain traceability from business definition to source fields, transformations, and validation evidence.
-- Add new working documents in a format appropriate to their reader and purpose; see [document_taxonomy.md](document_taxonomy.md).
+- Add new working documents in a format appropriate to their reader and purpose; see the [Document Taxonomy](<Document_Taxonomy.md>).
 - Keep client-ready outputs separate from internal working notes and clearly label their distribution status.
 

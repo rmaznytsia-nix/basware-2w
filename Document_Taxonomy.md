@@ -4,6 +4,20 @@ This taxonomy groups document genres by their **primary reader job**: what a rea
 
 Use the primary job to select a document type; use audience, medium, length, and placement as secondary labels. Terms such as *one-pager*, *appendix*, and *index* describe a format or location rather than a purpose, so they are listed separately.
 
+## Contents
+
+- [1. Orient and establish shared understanding](#1-orient-and-establish-shared-understanding)
+- [2. Condense and brief](#2-condense-and-brief)
+- [3. Inform decisions and persuade](#3-inform-decisions-and-persuade)
+- [4. Research, analyze, and report](#4-research-analyze-and-report)
+- [5. Specify, govern, and record commitments](#5-specify-govern-and-record-commitments)
+- [6. Enable execution and support](#6-enable-execution-and-support)
+- [7. Reference and retrieval aids](#7-reference-and-retrieval-aids)
+- [8. Format, placement, and maintenance labels](#8-format-placement-and-maintenance-labels)
+- [Selection guide](#selection-guide)
+
+---
+
 ## 1. Orient and establish shared understanding
 
 | Document | Primary reader job | Typical characteristics |

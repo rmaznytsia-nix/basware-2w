@@ -2,22 +2,69 @@
 
 # Databricks Lakehouse Data Modeling — Playbook
 
-Companion to the Basware Business 101 + Glossary. That doc covers Basware's business domain; this one covers the Databricks technical toolkit you'll design the canonical Gold-layer model with — reading list, do/don't, and a grouped feature catalog, structured for lookup mid-workshop rather than read-once.
+Companion to the [Basware Business 101 + Glossary](<Basware_Business_101_Glossary.md>). That doc covers Basware's business domain; this one covers the Databricks technical toolkit you'll design the canonical Gold-layer model with — reading list, do/don't, and a grouped feature catalog, structured for lookup mid-workshop rather than read-once. Fitness of Unity Catalog metric views for complex KPIs is in the [Unity Catalog Metric Views architecture brief](<Metric_Views_Brief.md>).
+
+## Contents
+
+- [How to use this reference](#how-to-use-this-reference-during-the-basware-embed)
+  - [Evidence and claim convention](#evidence-and-claim-convention)
+- [1. Reading list](#1-reading-list-ranked-most--less-valuable)
+- [2. Do / Don't](#2-do--dont--crystallized-from-the-sources-above)
+- [2A. Pipelines best practices](#2a-pipelines-best-practices)
+  - [Design and dataset choice](#design-and-dataset-choice)
+  - [Quality, correctness, and recoverability](#quality-correctness-and-recoverability)
+  - [Backfills](#backfills-and-historical-corrections)
+  - [Cost, deployment, and observability](#cost-deployment-and-observability)
+  - [Review checklist](#review-checklist-for-a-model-change)
+  - [Sources and annotations](#sources-and-annotations)
+- [3. Feature catalog](#3-databricks-feature-catalog-for-data-modeling--grouped-for-lookup)
+  - [A. Table types](#a-table-types--what-to-store-data-in)
+  - [B. Modeling instruments](#b-modeling-instruments-patterns-and-dedicated-components--how-to-shape-data)
+  - [C. Consumer integrations](#c-consumer-integrations--how-data-leaves-the-gold-layer)
+  - [D. Conventions and templates](#d-out-of-the-box-conventions--templates--dont-reinvent-these)
+  - [E. Operations](#e-operations--performance-recovery-monitoring)
+- [4. Data Quality & Reconciliation Toolkit](#4-data-quality--reconciliation-toolkit--dealing-with-messy-heterogeneous-sources)
+  - [Method](#method-in-one-paragraph)
+  - [Tool matrix](#expanded-tool-matrix-by-task)
+  - [Instrumented workflow](#instrumented-workflow-unchanged-core-loop-now-with-the-gaps-filled)
+- [5. Source-to-Target Mapping](#5-source-to-target-mapping--heavy-lifting-toolkit)
+- [6. Visualizing metric calculus](#6-visualizing-metric-calculus--worked-examples)
+  - [A. Metric tree](#a-metric-tree--driver-tree--shows-composition-and-which-source-system-feeds-which-branch)
+  - [B. ARR waterfall](#b-arr-waterfall--bridge-chart--shows-movement-period-over-period)
+  - [C. Metric lineage DAG](#c-metric-lineage-dag--shows-technical-derivation-source-column-to-gold-metric)
+  - [D. Sensitivity / tornado](#d-sensitivity--tornado-chart--shows-which-choice-moves-the-number-most)
+  - [E. Definition-version diff](#e-definition-version-diff--shows-how-the-calculation-itself-changed)
+- [7. Entity resolution](#7-entity-resolution--splinkzingg-vs-enterprisemanaged-options)
+  - [First classify the problem](#first-classify-the-problem--do-not-default-to-entity-resolution)
+  - [Splink and Zingg](#splink-and-zingg--confirmed-and-the-only-realistically-actionable-probabilistic-options-right-now)
+  - [Enterprise/managed options](#enterprisemanaged-options--verified-corrected-and-scoped-as-forward-looking-only)
+- [8. Buy vs. build](#8-buy-vs-build--databricks-marketplace-and-adjacent-options-worth-evaluating)
+  - [A. Ingestion / CDC](#a-ingestion--cdc-connectors--buy-vs-build-the-first-mile-pipeline)
+  - [B. Semantic-layer alternatives](#b-semantic-layer-alternatives-to-unity-catalog-metric-views--buy-vs-build-the-metric-definition-layer)
+  - [C. SaaS revenue platforms](#c-saas-revenuesubscription-metrics-platforms--buy-vs-build-the-arr-calculation-itself)
+  - [D. SI partners](#d-servicessystems-integrator-partners--buying-expertise-not-software)
+- [Appendix A — Pipeline service columns on Lakeflow targets](#appendix-a--pipeline-service-columns-on-lakeflow-targets)
+  - [A.1 AUTO CDC](#a1-auto-cdc--columns-the-pipeline-writes)
+  - [A.2 Auto Loader](#a2-auto-loader--file-ingest--bronze)
+  - [A.3 Change Data Feed](#a3-change-data-feed--not-stored-on-the-target)
+  - [A.4 Managed connectors](#a4-managed-connectors-lakeflow-connect)
+- [Sources](#sources)
 
 ---
 
 ## How to use this reference during the Basware embed
 
-This is intentionally broad. It is a decision-support reference, not the two-week delivery plan. Use the focused **Basware Engagement Playbook** for workshop cadence, decision ownership, and deliverable production; use this document when the walkthrough raises a technical or modeling choice.
+This is intentionally broad. It is a decision-support reference, not the two-week delivery plan. Use the focused [Basware Embed — 2-Week Playbook](<Basware_Engagement_Playbook.md>) for workshop cadence, decision ownership, and deliverable production; use this document when the walkthrough raises a technical or modeling choice.
 
 | If the walkthrough raises this question | Go to | Use it to decide |
 |---|---|---|
-| What should the selected KPI's grain, facts, dimensions, keys, or history look like? | §2A and §3B | The appropriate model and Lakeflow dataset pattern. |
-| Which source attribute is authoritative, or how should conflicting values be reconciled? | §4 | Evidence-gathering and deterministic reconciliation pattern. |
-| Is the SAP partner issue a hierarchy, reconciliation, or identity-matching problem? | §7 | The least-complex valid resolution path. |
-| Does the implementation need CDC, expectations, backfill, or a full-refresh plan? | §2A | A safe operational recommendation. |
-| How should the team explain model or KPI impact to stakeholders? | §6 | A decision-oriented visual artifact. |
-| Should a future Discovery phase evaluate a tool, vendor, or alternative semantic layer? | §8 | A forward-looking option, not a two-week embed commitment. |
+| What should the selected KPI's grain, facts, dimensions, keys, or history look like? | [2A. Pipelines best practices](#2a-pipelines-best-practices) and [3B. Modeling instruments, patterns, and dedicated components](#b-modeling-instruments-patterns-and-dedicated-components--how-to-shape-data) | The appropriate model and Lakeflow dataset pattern. |
+| Which source attribute is authoritative, or how should conflicting values be reconciled? | [4. Data Quality & Reconciliation Toolkit](#4-data-quality--reconciliation-toolkit--dealing-with-messy-heterogeneous-sources) | Evidence-gathering and deterministic reconciliation pattern. |
+| Is the SAP partner issue a hierarchy, reconciliation, or identity-matching problem? | [7. Entity resolution — First classify the problem](#first-classify-the-problem--do-not-default-to-entity-resolution) | The least-complex valid resolution path. |
+| Does the implementation need CDC, expectations, backfill, or a full-refresh plan? | [2A. Pipelines best practices](#2a-pipelines-best-practices) | A safe operational recommendation. |
+| Which service columns does a Lakeflow target actually get (change timestamp, SCD2 validity, file metadata)? | [Appendix A — Pipeline service columns on Lakeflow targets](#appendix-a--pipeline-service-columns-on-lakeflow-targets) | What is implicit on the table vs explicit in the SELECT vs CDF read-path only. |
+| How should the team explain model or KPI impact to stakeholders? | [6. Visualizing metric calculus](#6-visualizing-metric-calculus--worked-examples) | A decision-oriented visual artifact. |
+| Should a future Discovery phase evaluate a tool, vendor, or alternative semantic layer? | [8. Buy vs. build](#8-buy-vs-build--databricks-marketplace-and-adjacent-options-worth-evaluating) | A forward-looking option, not a two-week embed commitment. |
 
 ### Evidence and claim convention
 
@@ -86,7 +133,7 @@ This section turns the modeling guidance above into operational rules for Lakefl
 
 - **Choose the dataset type by processing need, not by layer name.** Use streaming tables for append-oriented ingestion and incremental row transformations; materialized views for analytical joins, aggregations, and precomputed serving datasets; and temporary views for pipeline-only intermediate logic. In Gold, use materialized views for most dimensions and aggregates; use streaming tables for incrementally maintained facts or SCD Type 2 history.
 - **Make the target grain and key explicit before authoring the flow.** Facts represent events or measurements; dimensions represent business entities. Prefer a stable source natural key; introduce a surrogate key only where source identifiers are reused or mutable. Keep fact tables keyed to dimensions rather than copying descriptive attributes into every fact.
-- **Use declarative CDC, not hand-written `MERGE`, for ordered change feeds.** `AUTO CDC ... INTO` / `create_auto_cdc_flow()` addresses ordering, deduplication, out-of-order changes, schema evolution, and SCD Type 1 or Type 2 behavior. Define the business key and reliable sequencing column deliberately; this is not a substitute for resolving ambiguous source semantics.
+- **Use declarative CDC, not hand-written `MERGE`, for ordered change feeds.** `AUTO CDC ... INTO` / `create_auto_cdc_flow()` addresses ordering, deduplication, out-of-order changes, schema evolution, and SCD Type 1 or Type 2 behavior. Define the business key and reliable sequencing column deliberately; this is not a substitute for resolving ambiguous source semantics. For the columns the target actually receives (`__START_AT` / `__END_AT`, rescued data, CDF read-path fields), see [Appendix A — Pipeline service columns on Lakeflow targets](#appendix-a--pipeline-service-columns-on-lakeflow-targets).
 - **Treat declarative flow APIs as the orchestration boundary.** A normal dataset definition creates a flow automatically. Add explicit flows only for genuine multi-source or specialized patterns, such as appending independent sources to one streaming target. Avoid writing directly to a dataset that the pipeline also manages.
 
 ### Quality, correctness, and recoverability
@@ -155,7 +202,7 @@ Five groups, each a quick-reference table. Use this mid-workshop when someone sa
 | **SCD Type 2** (via `APPLY CHANGES INTO` / `create_auto_cdc_flow` in Lakeflow) | Preserves full change history per record with effective-dated rows. | Directly relevant: if Contract End Date changes over time across systems, SCD2 on the `Contract` dimension gives you an auditable history instead of one overwritten value. |
 | **Change Data Feed (CDF)** | Row-level change tracking (insert/update/delete) on a Delta table. | Feeds SCD2 processing and lets Silver→Gold propagate deletes/updates correctly instead of silently going stale. |
 | **Deletion vectors** | Marks rows deleted via metadata instead of rewriting files immediately. | Performance/safety net under CDF-driven deletes — not something you design around, just know it's there. |
-| **Metric Views** | Semantic layer: define a metric's grain, joins, and time logic once, reuse everywhere (SQL, BI, Genie). | The candidate home for ARR/gross-margin logic — validate against real complexity before committing (see §2 Don't). |
+| **Metric Views** | Semantic layer: define a metric's grain, joins, and time logic once, reuse everywhere (SQL, BI, Genie). | The candidate home for ARR/gross-margin logic — validate against real complexity before committing (see [2. Do / Don't](#2-do--dont--crystallized-from-the-sources-above) and the [Unity Catalog Metric Views architecture brief](<Metric_Views_Brief.md>)). |
 | **Lakeflow / DLT expectations** | Declarative data-quality rules enforced in the pipeline (`EXPECT`, drop/fail/warn). | Where "quality checks built into the model design, validated before build" (from the pitch deck) actually gets implemented, not just described. |
 | **Data Vault hubs/links/satellites** | Business-key hubs, relationship links, descriptive satellites — resilient under disagreeing sources. | Alternative/hybrid pattern for Silver if Contract End Date turns out to need multi-source reconciliation rather than a single winner. |
 | **Liquid Clustering** | Adaptive physical clustering, replaces ZORDER/partitioning for most cases. | Physical layout choice for Gold fact/dimension tables — pair with star schema, not instead of it. |
@@ -189,7 +236,7 @@ Five groups, each a quick-reference table. Use this mid-workshop when someone sa
 | Concern | Feature | Notes |
 |---|---|---|
 | **Performance** | Liquid Clustering (+ Automatic Liquid Clustering via Predictive Optimization) | Adaptive clustering that self-tunes; supersedes manual ZORDER/partitioning for most Gold tables. |
-| **Performance** | Photon engine | Vectorized query engine — the "why star schemas perform fine here" answer to the myth in §2. |
+| **Performance** | Photon engine | Vectorized query engine — the "why star schemas perform fine here" answer to the myth in [2. Do / Don't](#2-do--dont--crystallized-from-the-sources-above). |
 | **Performance** | Predictive Optimization (OPTIMIZE/VACUUM/ANALYZE automation) | Reduces manual maintenance jobs — worth checking if it's already enabled before proposing manual optimize schedules. |
 | **Recovery** | Delta time travel | Query/restore a table as of a previous version or timestamp — your safety net when a Gold rebuild goes wrong. |
 | **Recovery** | `CLONE` (shallow/deep) | Fast table snapshotting for testing model changes without touching production. |
@@ -260,10 +307,10 @@ The specific grind of mapping business concepts to real columns across SalesClou
 |---|---|---|---|
 | **Plan the research** (from confirmed definitions, systems of record, domain rules) | Unity Catalog AI-generated comments as a starting inventory of what's already documented; system tables (`system.query`) to see which tables are actually queried, a proxy for what's live vs. dead schema | Turn an agreed Definition-of-Ready entry into a concrete research checklist — which systems, which tables, which columns to check, in what order, before any workshop | dbt `sources.yml` + docs blocks (if dbt is in the stack) as where definitions get formalized as code, not just prose; OpenMetadata/DataHub glossary if a proper catalog exists beyond a markdown file |
 | **Sniff source tables for known labels** | Query `information_schema.columns` (or `system.information_schema`) across every catalog/schema with a `LIKE '%end_date%'`-style scan — the actual mechanism for finding candidate columns at scale, not eyeballing; Unity Catalog's global search bar for free-text name/comment search | Given an exported column-name dump from the query above, pattern-match likely candidates across hundreds of columns in one pass — faster and more consistent than manual review | **Valentine** (schema-matching benchmark/framework — embedding + heuristic column-similarity methods, built for exactly this "which column in system B corresponds to this one in system A" problem); `rapidfuzz`/`thefuzz` for a lighter-weight fuzzy match against a controlled vocabulary |
-| **Join within and across sources** | Genie/Databricks SQL for actual join execution and iteration; Lakehouse Federation to join live against SAP/Salesforce without migrating first | Draft join SQL from a described schema when keys aren't obvious, and propose candidate join paths you hadn't considered | Splink/Zingg (§4) when there's no clean shared key; `networkx` to model tables as a graph and enumerate join paths when the route between two entities isn't obvious across many tables |
-| **Generate & validate hypotheses by trustful ranges** | DQX profiling + rule-candidate generation (§4); Lakehouse Monitoring for ongoing range/drift checks | Turn a profiling summary into a stated hypothesis plus the specific range-test needed to confirm or reject it (e.g., "M-Files end date should always be ≥ CPQ effective date — test this and show exceptions") | **Deequ Constraint Suggestion** — profiles data and auto-infers plausible constraints (ranges, nullability, uniqueness) via heuristic rules, directly generating the "trustful range" hypotheses instead of you guessing them; Great Expectations profiler for a more human-authored version of the same |
+| **Join within and across sources** | Genie/Databricks SQL for actual join execution and iteration; Lakehouse Federation to join live against SAP/Salesforce without migrating first | Draft join SQL from a described schema when keys aren't obvious, and propose candidate join paths you hadn't considered | Splink/Zingg ([4. Data Quality & Reconciliation Toolkit](#4-data-quality--reconciliation-toolkit--dealing-with-messy-heterogeneous-sources)) when there's no clean shared key; `networkx` to model tables as a graph and enumerate join paths when the route between two entities isn't obvious across many tables |
+| **Generate & validate hypotheses by trustful ranges** | DQX profiling + rule-candidate generation ([4. Data Quality & Reconciliation Toolkit](#4-data-quality--reconciliation-toolkit--dealing-with-messy-heterogeneous-sources)); Lakehouse Monitoring for ongoing range/drift checks | Turn a profiling summary into a stated hypothesis plus the specific range-test needed to confirm or reject it (e.g., "M-Files end date should always be ≥ CPQ effective date — test this and show exceptions") | **Deequ Constraint Suggestion** — profiles data and auto-infers plausible constraints (ranges, nullability, uniqueness) via heuristic rules, directly generating the "trustful range" hypotheses instead of you guessing them; Great Expectations profiler for a more human-authored version of the same |
 | **Present options/alternatives with statistics and visualization** | Databricks SQL / AI-BI dashboards for a live, client-facing comparison | Build the comparison artifact directly — chart, table, or small dashboard — as part of the deliverable itself, not just a description of one | **Evidently AI** — generates HTML comparison/drift reports between two datasets out of the box (e.g., distribution of M-Files dates vs. CPQ dates side by side); `ydata-profiling`'s two-dataset compare mode |
-| **Draft transformation logic** | Lakeflow/DLT to productionize (§3–4) | Claude Code — draft the SQL/PySpark from the confirmed mapping spec, including edge cases | `sqlglot` to validate/transpile the draft SQL; `dbt-codegen` for boilerplate staging-model scaffolding if dbt is in the stack |
+| **Draft transformation logic** | Lakeflow/DLT to productionize ([3. Databricks feature catalog](#3-databricks-feature-catalog-for-data-modeling--grouped-for-lookup)–[4. Data Quality & Reconciliation Toolkit](#4-data-quality--reconciliation-toolkit--dealing-with-messy-heterogeneous-sources)) | Claude Code — draft the SQL/PySpark from the confirmed mapping spec, including edge cases | `sqlglot` to validate/transpile the draft SQL; `dbt-codegen` for boilerplate staging-model scaffolding if dbt is in the stack |
 
 The pattern across all six rows: Databricks-native tools are where you *execute* against real governed data, Claude is where you *plan, pattern-match, and draft* faster than doing it by hand, and the open-source tools fill the specific gaps neither of the other two covers well — automated constraint/range inference (Deequ), rigorous column-similarity matching (Valentine), and side-by-side statistical comparison reports (Evidently AI).
 
@@ -324,7 +371,7 @@ If the Churned line moves materially depending on which of the three systems is 
 
 ### C. Metric lineage DAG — shows technical derivation, source column to Gold metric
 
-The engineer-facing counterpart to the metric tree: actual tables/columns/joins, not business drivers. Close to free once Unity Catalog lineage is populated (§3E).
+The engineer-facing counterpart to the metric tree: actual tables/columns/joins, not business drivers. Close to free once Unity Catalog lineage is populated ([3E. Operations — performance, recovery, monitoring](#e-operations--performance-recovery-monitoring)).
 
 ```mermaid
 graph LR
@@ -345,7 +392,7 @@ graph LR
     style RECON fill:#5a1a1a,stroke:#c0392b,color:#fff
 ```
 
-`RECON` is the node worth annotating explicitly in the real model — it's where the Contract End Date decision actually gets encoded, and it's the node a future silent break needs a monitor on (§4, step 12).
+`RECON` is the node worth annotating explicitly in the real model — it's where the Contract End Date decision actually gets encoded, and it's the node a future silent break needs a monitor on ([4. Instrumented workflow](#instrumented-workflow-unchanged-core-loop-now-with-the-gaps-filled), step 12).
 
 ### D. Sensitivity / tornado chart — shows which choice moves the number most
 
@@ -391,7 +438,7 @@ The SAP partner question may be a known hierarchy/role-mapping problem, a confli
 
 ### Splink and Zingg — confirmed, and the only realistically actionable probabilistic options right now
 
-Both were already in §4; two details from the submitted research are accurate and worth adding:
+Both were already in [4. Data Quality & Reconciliation Toolkit](#4-data-quality--reconciliation-toolkit--dealing-with-messy-heterogeneous-sources); two details from the submitted research are accurate and worth adding:
 
 - **Splink** supports **term-frequency adjustments** — it down-weights a match on a common value (e.g., a common surname, or here, a common partner/reseller name) relative to a rare one, which matters if Basware's reseller names cluster around a handful of large, frequently-repeated VAR brands. Confirmed accurate.
 - **Zingg**'s active-learning loop is genuinely human-in-the-loop supervised matching (not unsupervised like Splink) — confirmed accurate, and the practical implication is Zingg needs someone available to label match/non-match pairs during setup, which is a real time cost to weigh against a 2-week embed. The specific claimed language list (English, Chinese, Thai, Japanese, Hindi, etc.) is plausible per Zingg's own marketing but wasn't independently re-verified here — treat the exact list as reported, not confirmed.
@@ -414,7 +461,7 @@ Both were already in §4; two details from the submitted research are accurate a
 
 ## 8. Buy vs. build — Databricks Marketplace and adjacent options worth evaluating
 
-Entity resolution (§7) is one buy-vs-build fork. There are at least three more, each addressing a different layer of Basware's actual problem — first-mile ingestion, the semantic/metric layer itself, and the ARR/rev-rec calculation logic. None of these are procurable inside a 2-week embed; this section is for the Discovery-phase recommendations, framed the same way as §7 — named as options, not implied as already in place.
+[7. Entity resolution](#7-entity-resolution--splinkzingg-vs-enterprisemanaged-options) is one buy-vs-build fork. There are at least three more, each addressing a different layer of Basware's actual problem — first-mile ingestion, the semantic/metric layer itself, and the ARR/rev-rec calculation logic. None of these are procurable inside a 2-week embed; this section is for the Discovery-phase recommendations, framed the same way as [7. Entity resolution](#7-entity-resolution--splinkzingg-vs-enterprisemanaged-options) — named as options, not implied as already in place.
 
 ### A. Ingestion / CDC connectors — buy vs. build the first-mile pipeline
 
@@ -429,11 +476,11 @@ Before any modeling happens, someone has to reliably move data out of SalesCloud
 
 ### B. Semantic-layer alternatives to Unity Catalog Metric Views — buy vs. build the metric definition layer
 
-This is the direct "what's Option B" answer to the Metric Views maturity risk your presale notes already flagged.
+This is the direct "what's Option B" answer to the Metric Views maturity risk your presale notes already flagged. Capabilities, constraints, and enterprise fit are in the [Unity Catalog Metric Views architecture brief](<Metric_Views_Brief.md>).
 
 | Option | What it is | Why worth checking for Basware |
 |---|---|---|
-| **Unity Catalog Metric Views** (baseline — already in §1/§3) | Native, free, ties definitions to Databricks specifically. | The "build" default — no procurement, but young, and platform-locked. |
+| **Unity Catalog Metric Views** (baseline — already in [1. Reading list](#1-reading-list-ranked-most--less-valuable)/[3. Databricks feature catalog](#3-databricks-feature-catalog-for-data-modeling--grouped-for-lookup)) | Native, free, ties definitions to Databricks specifically. | The "build" default — no procurement, but young, and platform-locked. |
 | **dbt Semantic Layer / MetricFlow** | Git-native metric definitions as YAML in a dbt project, governed through PRs/CI, platform-agnostic. | If Basware already has or adopts dbt for transformation, this keeps metric definitions in the same Git-reviewed workflow as the models themselves — arguably a better fit for the "Definition of Ready" governance process you're already recommending, since a metric change becomes a reviewable pull request. |
 | **Cube** | Independent, API-first semantic layer, platform-agnostic, positioned as a pure semantic layer rather than warehouse-native. | Worth naming if Basware ever wants the metric layer to outlive a specific warehouse choice — decouples "what ARR means" from "which platform computes it." |
 | **AtScale** | Enterprise-grade semantic virtualization layer, built for large-scale, multi-BI-tool enterprise deployments. | Heavier and more enterprise-oriented than Cube/dbt — likely overkill for Basware's scale, but worth naming for completeness if the Discovery phase wants a full options table. |
@@ -450,6 +497,59 @@ A different fork than A and B: instead of building ARR/renewal-rate logic from r
 ### D. Services/systems-integrator partners — buying expertise, not software
 
 A third axis, distinct from buying a tool: **Trigent**, a Databricks Consulting & SI partner, is confirmed to offer data-quality and DataOps-automation services specifically. Worth naming as the "buy the reconciliation work itself" option if Basware's Cresco team concludes the Contract End Date / partner hierarchy problem needs sustained specialist effort beyond what a small internal team (5 + 3 contractors) can carry — this is the category the bigger 5-week Discovery SOW itself sits in.
+
+---
+
+## Appendix A — Pipeline service columns on Lakeflow targets
+
+Lookup for what Databricks actually writes onto a pipeline **target table** versus what only appears when you **read** a change feed. Platform documentation, checked August 2026 — **illustrative pattern**, not a statement about Basware's current implementation. Verify column names in the tenant before putting them in a KPI contract.
+
+**Change timestamp is not processing time.** `AUTO CDC` does not stamp `current_timestamp()` onto the target. For SCD Type 2 it copies your `SEQUENCE BY` value into `__START_AT` / `__END_AT`. If that column is ingest time rather than business event time, history will show pipeline time, not source time.
+
+### A.1 AUTO CDC — columns the pipeline writes
+
+`AUTO CDC INTO` / `create_auto_cdc_flow()` against a streaming table. SCD Type 1 keeps current state only and does **not** add temporal columns.
+
+| Column | Kind | When it exists | Type / source | Meaning |
+|---|---|---|---|---|
+| `__START_AT` | Implicit | SCD Type 2 and Bitemporal | Same type as `SEQUENCE BY` | Business-time start of this version. Populated from `SEQUENCE BY`, not wall-clock ingest time. |
+| `__END_AT` | Implicit | SCD Type 2 and Bitemporal | Same type as `SEQUENCE BY` | Business-time end. `NULL` = currently valid. Treat as half-open `[start, end)`. |
+| `__SYSTEM_START_AT` | Implicit | `STORED AS BITEMPORAL` (Beta) | Same type as `SYSTEM SEQUENCE BY` | When the system knew this row (knowledge / ingest time). |
+| `__SYSTEM_END_AT` | Implicit | `STORED AS BITEMPORAL` (Beta) | Same type as `SYSTEM SEQUENCE BY` | When that knowledge was superseded. `NULL` = still believed true. |
+| KEYS columns | Explicit | Always (you name them) | Source key type | Business identity. SCD2 primary key is keys plus `coalesce(__START_AT, __END_AT)`. |
+| `SEQUENCE BY` column | Explicit | Required on the flow; usually excluded from `COLUMNS *` | Sortable | Orders out-of-order CDC. Typical pattern: `COLUMNS * EXCEPT (operation, sequence_col)`. |
+| `GENERATED ALWAYS AS IDENTITY` | Explicit | Only if declared on the target schema | `BIGINT` | Surrogate key. Not created unless you add it to `CREATE STREAMING TABLE`. |
+
+If you declare an explicit target schema for SCD2, you must include `__START_AT` and `__END_AT` with the `SEQUENCE BY` type. Do not rename them on the CDC target; alias downstream if you want `valid_from` / `valid_to`.
+
+**Query pattern:** current row `WHERE __END_AT IS NULL`. Point-in-time `D`: `__START_AT <= D AND (__END_AT > D OR __END_AT IS NULL)`.
+
+**Basware modeling implication:** for Contract End Date / customer SCD2, sequence by the source change time (for example SalesCloud last-modified or CPQ amendment timestamp), not pipeline processing time. Keep `__START_AT` / `__END_AT` as the system history interval; put business Contract End Date in its own attribute column.
+
+### A.2 Auto Loader / file ingest — Bronze
+
+Reader-side service fields. They land on the target only if the streaming query selects them, except `_rescued_data`, which Auto Loader adds when schema is inferred.
+
+| Column | Kind | How it gets onto the target | Meaning |
+|---|---|---|---|
+| `_rescued_data` | Implicit | Added automatically when Auto Loader infers schema; or set `rescuedDataColumn` | JSON blob of unmatched / type-mismatched / case-mismatched fields plus source file path. |
+| `_corrupt_record` | Explicit | Enable `columnNameOfCorruptRecord` | Rows that cannot be parsed at all (malformed JSON/CSV), distinct from schema rescue. |
+| `_metadata` | Explicit | Hidden until you `SELECT` it (alias, for example `source_metadata`) | STRUCT: `file_path`, `file_name`, `file_size`, `file_modification_time`, `file_block_start`, `file_block_length`. |
+| `current_timestamp()` as ingest_ts | Explicit | You add it in the `SELECT` | True pipeline ingest time. Not provided by AUTO CDC. |
+
+### A.3 Change Data Feed — not stored on the target
+
+Enable CDF with `delta.enableChangeDataFeed = true`. These three fields appear only on `table_changes()` / `readChangeFeed`, not as ordinary columns of the pipeline table. Do not name business columns `_change_type`, `_commit_version`, or `_commit_timestamp` or CDF cannot be enabled.
+
+| Column | Kind | Type | Values |
+|---|---|---|---|
+| `_change_type` | Read path only | `STRING` | `insert`, `update_preimage`, `update_postimage`, `delete` |
+| `_commit_version` | Read path only | `BIGINT` | Delta log version of the commit |
+| `_commit_timestamp` | Read path only | `TIMESTAMP` | When that Delta commit was created |
+
+### A.4 Managed connectors (Lakeflow Connect)
+
+Kafka / RabbitMQ do not write broker metadata by default. Set `source_metadata_column` to get a struct (Kafka: `topic`, `partition`, `offset`, `timestamp`, `timestampType`, `headers`). Salesforce-style managed destination tables cannot be injected at ingest; add a thin downstream streaming table with `current_timestamp()` if you need an ingest clock.
 
 ---
 
@@ -505,7 +605,7 @@ A third axis, distinct from buying a tool: **Trigent**, a Databricks Consulting 
 - [Splink — probabilistic data linkage (GitHub, MoJ Analytical Services)](https://github.com/moj-analytical-services/splink)
 - [Best Open Source Entity Resolution Libraries: Splink, Zingg, dedupe — Tilores](https://tilores.io/content/best-open-source-entity-resolution-and-record-linkage-libraries-splink-zingg-dedupe-and-when-to-move-beyond-them/)
 
-**Entity resolution — enterprise/managed options (verified against §7)**
+**Entity resolution — enterprise/managed options (verified against [7. Entity resolution](#7-entity-resolution--splinkzingg-vs-enterprisemanaged-options))**
 - [Reltio Embedded Entity Resolution in Databricks at a glance — Reltio docs](https://docs.reltio.com/en/products/reltio-entity-resolution/reltio-embedded-entity-resolution-in-databricks-at-a-glance)
 - [Reltio and Databricks Partner to Deliver Trusted Data to Fuel AI Initiatives — BusinessWire](https://www.businesswire.com/news/home/20240912934610/en/Reltio-and-Databricks-Partner-to-Deliver-Trusted-Data-to-Fuel-AI-Initiatives-Across-the-Enterprise)
 - [Guide to Entity Resolution with AI-Native MDM — Tamr](https://www.tamr.com/blog/guide-to-entity-resolution-with-ai-native-mdm)
@@ -515,7 +615,7 @@ A third axis, distinct from buying a tool: **Trigent**, a Databricks Consulting 
 - [Databricks Clean Rooms: Privacy and Collaboration — Databricks product page](https://www.databricks.com/product/collaboration/clean-rooms)
 - [Top 10 Questions You Asked About Databricks Clean Rooms, Answered — Databricks Blog](https://www.databricks.com/blog/top-10-questions-you-asked-about-databricks-clean-rooms-answered)
 
-**Buy vs. build — ingestion, semantic layer, and adjacent options (§8)**
+**Buy vs. build — ingestion, semantic layer, and adjacent options ([8. Buy vs. build](#8-buy-vs-build--databricks-marketplace-and-adjacent-options-worth-evaluating))**
 - [What is Databricks Marketplace? — Databricks on AWS docs](https://docs.databricks.com/aws/en/marketplace/)
 - [Connect to Fivetran — Databricks on AWS docs](https://docs.databricks.com/aws/en/partners/ingestion/fivetran)
 - [Databricks integrates data tools with Partner Connect — VentureBeat](https://venturebeat.com/business/databricks-integrates-data-tools-with-partner-connect)
@@ -546,3 +646,12 @@ A third axis, distinct from buying a tool: **Trigent**, a Databricks Consulting 
 - [Every Product Needs a North Star Metric — Amplitude](https://amplitude.com/blog/product-north-star-metric)
 - [Building a Driver Tree Template — Miroverse](https://miro.com/miroverse/building-a-driver-tree/)
 - [About MetricFlow — dbt Developer Hub](https://docs.getdbt.com/docs/build/about-metricflow)
+
+**Pipeline service columns ([Appendix A — Pipeline service columns on Lakeflow targets](#appendix-a--pipeline-service-columns-on-lakeflow-targets))**
+- [The AUTO CDC APIs — Databricks on AWS](https://docs.databricks.com/aws/en/ldp/cdc) · [Azure](https://learn.microsoft.com/en-us/azure/databricks/ldp/cdc)
+- [Advanced AUTO CDC topics (bitemporal) — Databricks on AWS](https://docs.databricks.com/aws/en/ldp/cdc-advanced) · [Azure](https://learn.microsoft.com/en-us/azure/databricks/ldp/cdc-advanced)
+- [AUTO CDC INTO (pipelines) — Databricks on AWS](https://docs.databricks.com/aws/en/ldp/developer/ldp-sql-ref-apply-changes-into)
+- [Auto Loader best practices](https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/best-practices)
+- [File metadata column](https://docs.databricks.com/aws/en/ingestion/file-metadata-column)
+- [Use change data feed on Databricks](https://docs.databricks.com/aws/en/tables/features/change-data-feed)
+- [Ingest data from Apache Kafka — source metadata column](https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/kafka-pipeline)

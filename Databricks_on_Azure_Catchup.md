@@ -5,6 +5,25 @@
 
 > This is the complete registry of materials identified in the earlier browser, Partner Portal and GitHub review. Items are retained even where they are older, cloud-generic, third-party, or lower priority; use the relevance column to decide reading order.
 
+## Contents
+
+- [Start here](#start-here)
+- [Catch up quickly and effectively](#catch-up-quickly-and-effectively)
+- [1. Official platform and Azure guidance](#1-official-platform-and-azure-guidance)
+- [2. Databricks Partner Portal delivery materials](#2-databricks-partner-portal-delivery-materials)
+- [3. Databricks GitHub reference implementations](#3-databricks-github-reference-implementations)
+- [4. Additional public materials previously identified](#4-additional-public-materials-previously-identified)
+- [Practical architecture recommendations](#practical-architecture-recommendations)
+- [Databricks Azure Best Practices](#databricks-azure-best-practices)
+  - [Reliability](#reliability)
+  - [Security](#security)
+  - [Cost Optimization](#cost-optimization)
+  - [Operational Excellence](#operational-excellence)
+  - [Performance Efficiency](#performance-efficiency)
+- [Fast-reference source map](#fast-reference-source-map)
+
+---
+
 ## Start here
 
 Read these four first. They provide the highest-value current baseline before diving into product details or example code.
