@@ -89,6 +89,7 @@ Sources: [Datarails — GRR vs NRR](https://www.datarails.com/grr-vs-nrr/), [Clo
 
 ---
 
+<a id="4-why-customer-contract-and-partner-are-genuinely-ambiguous-here"></a>
 ## 4. Why "Customer," "Contract," and "Partner" are genuinely ambiguous here
 
 This isn't sloppiness on Basware's part — their GTM model structurally creates the ambiguity:
@@ -187,7 +188,7 @@ Since there's no BA to run structured elicitation for you, borrow their toolkit:
 
 ## 8. Databricks technical toolkit — moved out
 
-The ranked reading list, do/don't, and the Databricks feature catalog (table types, modeling instruments, consumer integrations, conventions/templates, operations) now live in the [Databricks Lakehouse Data Modeling Playbook](<Databricks_Data_Modeling_Playbook.md>). This file stays focused on Basware's business domain; that one covers the technical toolkit you design the canonical model with.
+The modeling principles, feature catalog, Lakeflow pipeline rules, and source-to-Gold reconciliation method now live in the [Databricks Lakehouse Data Modeling Playbook](./Databricks_Data_Modeling_Playbook.md). This file stays focused on Basware's business domain; that one covers the technical toolkit you design the canonical model with.
 
 ---
 
