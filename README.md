@@ -29,8 +29,8 @@ Working materials for a two-week Basware data-architecture engagement. The repos
   - [Snowflake to Lakehouse Migration Assessment](./databricks/Snowflake%20to%20Lakehouse%20Migration%20Assessment%205-23.pptx) — migration assessment deck
 - **[reference/](./reference/)** — document-type guidance and captured source material
   - [Document Taxonomy](./reference/Document_Taxonomy.md) — how to choose a document type by reader job
-  - [KPI Tree guides capture](./reference/kpitree-guides-capture-2026-08-26.md) — local capture of kpitree.co methodology used by the Metric Workshop
-  - [KPI Tree metric glossary capture](./reference/kpitree-glossary-metric-pages.md) — local capture of kpitree.co glossary metric definitions
+  - [KPI Tree guides capture](./reference/kpitree-guides-capture.md) — index of kpitree.co methodology used by the Metric Workshop; full articles are in [`kpitree-guides/`](./reference/kpitree-guides/)
+  - [KPI Tree metric glossary capture](./reference/kpitree-glossary-metric.md) — index of kpitree.co glossary metric definitions; full pages are in [`kpitree-glossary/`](./reference/kpitree-glossary/)
 
 ## Working approach
 

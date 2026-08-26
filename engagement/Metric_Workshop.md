@@ -705,7 +705,7 @@ Copy into the evidence pack. Keep production keys out of this markdown file.
 ## Sources
 
 **Workshop method**
-- [KPI Tree guides — captured local copy](../reference/kpitree-guides-capture-2026-08-26.md)
+- [KPI Tree guides — captured local copy](../reference/kpitree-guides-capture.md)
 - [How to Run a Metric Tree Workshop — KPI Tree](https://kpitree.co/guides/how-to/metric-tree-workshop)
 - [How to Build a Metric Tree — KPI Tree](https://kpitree.co/guides/getting-started/how-to-build-a-metric-tree)
 - [The Decision-Making Gap — KPI Tree](https://kpitree.co/guides/strategy-culture/decision-making-gap)
