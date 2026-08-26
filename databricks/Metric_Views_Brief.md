@@ -6,7 +6,7 @@ Checked August 2026. Status authority is Azure Databricks documentation. Launch 
 
 **Decision this brief supports:** should Basware encode ARR / gross margin / the remaining KPIs as Unity Catalog metric views, keep them in Power BI / dbt MetricFlow, or split layers? Do not treat this as a build plan for the two-week embed.
 
-Related: [modeling principles](./Databricks_Data_Modeling_Playbook.md#1-modeling-principles) in the [Databricks Lakehouse Data Modeling Playbook](./Databricks_Data_Modeling_Playbook.md); platform timing in [Databricks platform architecture changes, 2024–2026](./Databricks_Platform_Architecture_2024-2026.md). The [Basware Embed — 2-Week Playbook](./Basware_Engagement_Playbook.md) already flags an internal presale risk that Metric Views/Genie may be immature for Basware’s business-logic complexity — this brief is the evidence pack for that question.
+Related: [modeling principles](./Databricks_Data_Modeling_Playbook.md#1-modeling-principles) in the [Databricks Lakehouse Data Modeling Playbook](./Databricks_Data_Modeling_Playbook.md); platform timing in [Databricks platform architecture changes, 2024–2026](./Databricks_Platform_Architecture_2024-2026.md). The [Basware Embed — 2-Week Playbook](../engagement/Basware_Engagement_Playbook.md) already flags an internal presale risk that Metric Views/Genie may be immature for Basware’s business-logic complexity — this brief is the evidence pack for that question.
 
 ## Contents
 
@@ -178,7 +178,7 @@ Score against patterns that show up in SaaS finance (ARR, NRR/GRR, partner vs en
 
 **Bottom line for “real complex enterprise use cases”:** Metric views are suitable as the **last governed compile step** on a dimensional Gold model that already got grain, keys, and time semantics right. They are a poor place to hide identity resolution, contract-date arbitration, or partner hierarchy. They are a poor **sole** semantic layer if the firm’s analysts live in Power BI Desktop models. They are a good Genie/AI/BI foundation **after** the KPI definition contract exists.
 
-That is the same conclusion the [Basware Embed — 2-Week Playbook](./Basware_Engagement_Playbook.md) already hinted at; the docs now make it specific rather than a presale hunch.
+That is the same conclusion the [Basware Embed — 2-Week Playbook](../engagement/Basware_Engagement_Playbook.md) already hinted at; the docs now make it specific rather than a presale hunch.
 
 ---
 

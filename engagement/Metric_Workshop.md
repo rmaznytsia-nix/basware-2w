@@ -4,15 +4,15 @@
 
 Facilitator guide for the KPI case clinic. Stakeholders think in contracts, exceptions, and “what Finance would reject.” The team thinks in grain, three source fields, and a reconciliation node. This file is the shared object both sides can inhabit: sequence, audience rules, and filled examples. Copy-paste blanks live only in [Blank templates](#appendix-a--blank-templates).
 
-All numbers, customer names, and dates below are an **illustrative pattern**, not Basware facts. Swap in redacted actuals from the [KPI Evidence Pack](./Basware_Engagement_Playbook.md#appendix-d--kpi-evidence-pack). Label every cell with the [evidence and claim convention](./Databricks_Data_Modeling_Playbook.md#evidence-and-claim-convention).
+All numbers, customer names, and dates below are an **illustrative pattern**, not Basware facts. Swap in redacted actuals from the [KPI Evidence Pack](./Basware_Engagement_Playbook.md#appendix-d--kpi-evidence-pack). Label every cell with the [evidence and claim convention](../databricks/Databricks_Data_Modeling_Playbook.md#evidence-and-claim-convention).
 
 This workshop **drafts** the [Metric Specification Template](./metric-specification-template.md) (Wernfeldt: one metric, one owner, clear accountability). It does not replace it. Clinic artifacts are evidence; the specification is the commitment.
 
-Cadence and decision rights stay in the [Basware Embed — 2-Week Playbook](./Basware_Engagement_Playbook.md) — especially the [KPI Elicitation Protocol for Fragmented Evidence](./Basware_Engagement_Playbook.md#appendix-h--kpi-elicitation-protocol-for-fragmented-evidence), [KPI Definition Contract](./Basware_Engagement_Playbook.md#appendix-a--kpi-definition-contract), and [KPI Decision Rights](./Basware_Engagement_Playbook.md#appendix-c--kpi-decision-rights). Modeling patterns stay in the [Databricks Lakehouse Data Modeling Playbook](./Databricks_Data_Modeling_Playbook.md#4-from-source-disagreement-to-gold-definition). Metric-view fitness is in the [Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md). Vocabulary collisions are in the [Basware Business 101 + Glossary](./Basware_Business_101_Glossary.md).
+Cadence and decision rights stay in the [Basware Embed — 2-Week Playbook](./Basware_Engagement_Playbook.md) — especially the [KPI Elicitation Protocol for Fragmented Evidence](./Basware_Engagement_Playbook.md#appendix-h--kpi-elicitation-protocol-for-fragmented-evidence), [KPI Definition Contract](./Basware_Engagement_Playbook.md#appendix-a--kpi-definition-contract), and [KPI Decision Rights](./Basware_Engagement_Playbook.md#appendix-c--kpi-decision-rights). Modeling patterns stay in the [Databricks Lakehouse Data Modeling Playbook](../databricks/Databricks_Data_Modeling_Playbook.md#4-from-source-disagreement-to-gold-definition). Metric-view fitness is in the [Unity Catalog Metric Views architecture brief](../databricks/Metric_Views_Brief.md). Vocabulary collisions are in the [Basware Business 101 + Glossary](../business/Basware_Business_101_Glossary.md).
 
 Do not treat a dashboard as the alignment vehicle. Settle the definition in the room, then encode it once ([KPI framework before dashboards](https://www.reportsimple.com.au/post/kpi-framework-before-dashboards)).
 
-**Two status systems — do not mix them.** Evidence labels ([evidence and claim convention](./Databricks_Data_Modeling_Playbook.md#evidence-and-claim-convention)) say whether a *finding* is confirmed. Specification lifecycle says whether the *metric* may be used: **Draft** / **Active** / **Deprecated** ([Status](./metric-specification-template.md#section-11-status)). A metric can be Draft while several clinic rows are still decision pending. Active requires the metric owner’s signed approval.
+**Two status systems — do not mix them.** Evidence labels ([evidence and claim convention](../databricks/Databricks_Data_Modeling_Playbook.md#evidence-and-claim-convention)) say whether a *finding* is confirmed. Specification lifecycle says whether the *metric* may be used: **Draft** / **Active** / **Deprecated** ([Status](./metric-specification-template.md#section-11-status)). A metric can be Draft while several clinic rows are still decision pending. Active requires the metric owner’s signed approval.
 
 ## Contents
 
@@ -167,7 +167,7 @@ Blank card: [Decision lock](#a1-decision-lock).
 
 ## 2. Event timeline
 
-Lite [process-level event storming](https://www.qlerify.com/post/event-storming-the-complete-guide): one subscription, left to right, **past-tense business events**. Stakeholders narrate in business language (“legal contract filed”). System names and field names sit in the mapping columns for the team **after** the room agrees the story ([Business Definition](./metric-specification-template.md#section-2-business-definition): the definition itself stays free of SQL). Later, map each event to a source timestamp and, for SCD2, to `__START_AT` versus the business Contract End Date attribute ([service columns on Lakeflow targets](./Databricks_Data_Modeling_Playbook.md#service-columns-on-lakeflow-targets)). Do not run a full event-storming wall in this SOW.
+Lite [process-level event storming](https://www.qlerify.com/post/event-storming-the-complete-guide): one subscription, left to right, **past-tense business events**. Stakeholders narrate in business language (“legal contract filed”). System names and field names sit in the mapping columns for the team **after** the room agrees the story ([Business Definition](./metric-specification-template.md#section-2-business-definition): the definition itself stays free of SQL). Later, map each event to a source timestamp and, for SCD2, to `__START_AT` versus the business Contract End Date attribute ([service columns on Lakeflow targets](../databricks/Databricks_Data_Modeling_Playbook.md#service-columns-on-lakeflow-targets)). Do not run a full event-storming wall in this SOW.
 
 Stop when you reach events a single team can influence ([How to build a metric tree](https://kpitree.co/guides/getting-started/how-to-build-a-metric-tree)). Mark hotspots (orange) where systems disagree.
 
@@ -326,7 +326,7 @@ Blank cards: [Source strip](#a6-source-strip), [Tornado](#a7-tornado).
 | CLINIC-ARR-07 | dual-entity suspect | two IDs | one ID | one ID | classify first — do not assume matching | mixed | 60,000 |
 | CLINIC-ARR-08 | country variant FI | 2026-06-30 | 2026-08-31 | 2026-06-30 | country process | CPQ | 41,000 |
 
-CLINIC-ARR-07 is a [Classify the problem first](./Databricks_Data_Modeling_Playbook.md#classify-the-problem-first) case: hierarchy vs reconciliation vs identity. Do not drop it into Splink from this table alone.
+CLINIC-ARR-07 is a [Classify the problem first](../databricks/Databricks_Data_Modeling_Playbook.md#classify-the-problem-first) case: hierarchy vs reconciliation vs identity. Do not drop it into Splink from this table alone.
 
 ### Tornado — only after the strip
 
@@ -386,7 +386,7 @@ If the Churned bar moves materially depending on which of the three systems is a
 
 ## 8. Lineage DAG as twin of the tree
 
-Engineer-facing counterpart: tables, columns, joins — not business drivers. Close to free once Unity Catalog lineage is populated ([Operations](./Databricks_Data_Modeling_Playbook.md#e-operations)). In a mixed room, show it **only** as a twin of the metric tree: the red leaf “Contract End Date” is the red node `RECON`.
+Engineer-facing counterpart: tables, columns, joins — not business drivers. Close to free once Unity Catalog lineage is populated ([Operations](../databricks/Databricks_Data_Modeling_Playbook.md#e-operations)). In a mixed room, show it **only** as a twin of the metric tree: the red leaf “Contract End Date” is the red node `RECON`.
 
 ```mermaid
 flowchart LR
@@ -418,9 +418,9 @@ graph LR
     style RECON fill:#5a1a1a,stroke:#c0392b,color:#fff
 ```
 
-`RECON` is where the Contract End Date decision is encoded, and where a future silent break needs a monitor ([Method](./Databricks_Data_Modeling_Playbook.md#method)). Do not ask business to validate this diagram. Ask them to validate the calculation card; the engineer uses the DAG to show where that ruling will live.
+`RECON` is where the Contract End Date decision is encoded, and where a future silent break needs a monitor ([Method](../databricks/Databricks_Data_Modeling_Playbook.md#method)). Do not ask business to validate this diagram. Ask them to validate the calculation card; the engineer uses the DAG to show where that ruling will live.
 
-Certified consumption of the agreed grain is a metric view, not the place that invents Contract End Date ([Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md)).
+Certified consumption of the agreed grain is a metric view, not the place that invents Contract End Date ([Unity Catalog Metric Views architecture brief](../databricks/Metric_Views_Brief.md)).
 
 ---
 
@@ -439,7 +439,7 @@ Blank card: [Acceptance card](#a9-acceptance-card).
 | AT-01 | Direct customer; commercial, legal, and opportunity end dates equal 30 Jun 2026 | Month-end snapshot 31 Mar 2026 | Line **remains in ARR** | _Commercial-Finance Controller_ | Hypothesis to validate |
 | AT-02 | Reseller-fulfilled; legal end 15 Mar 2026; commercial form end 30 Jun 2026 | Month-end snapshot 31 Mar 2026 | Line **out of ARR**; churned in Q1; attributed to **end-customer**, reseller tagged | _Commercial-Finance Controller_ | **Decision pending** |
 | AT-03 | Legal end date missing; commercial form end 30 Jun 2026 | Month-end snapshot 31 Mar 2026 | Line **remains in ARR** on the commercial-form fallback | _Commercial-Finance Controller_ | Decision pending (fallback rule) |
-| AT-04 | Two source IDs may represent the same partner | Any close | ARR **does not** treat them as one customer until [Classify the problem first](./Databricks_Data_Modeling_Playbook.md#classify-the-problem-first) says identity matching is required | _Commercial-Finance Controller_ (architecture recommends) | Decision pending |
+| AT-04 | Two source IDs may represent the same partner | Any close | ARR **does not** treat them as one customer until [Classify the problem first](../databricks/Databricks_Data_Modeling_Playbook.md#classify-the-problem-first) says identity matching is required | _Commercial-Finance Controller_ (architecture recommends) | Decision pending |
 
 AT-02 is CLINIC-ARR-01. If the metric owner will not sign Then, the definition is not confirmed and the spec stays **Draft** — regardless of how complete the lineage DAG looks.
 
@@ -447,7 +447,7 @@ AT-02 is CLINIC-ARR-01. If the metric owner will not sign Then, the definition i
 
 ## 10. Word-collision card
 
-Use only if “Customer,” “Contract,” or “Partner” collide mid-workshop. Full vocabulary is in [Why "Customer," "Contract," and "Partner" are genuinely ambiguous](./Basware_Business_101_Glossary.md#4-why-customer-contract-and-partner-are-genuinely-ambiguous-here).
+Use only if “Customer,” “Contract,” or “Partner” collide mid-workshop. Full vocabulary is in [Why "Customer," "Contract," and "Partner" are genuinely ambiguous](../business/Basware_Business_101_Glossary.md#4-why-customer-contract-and-partner-are-genuinely-ambiguous-here).
 
 Blank card: [Word collision](#a10-word-collision).
 
@@ -468,7 +468,7 @@ flowchart TB
 |---|---|---|---|---|---|
 | Customer | SalesCloud account | End-customer behind a VAR | Legal party on M-Files | **Decision pending** — scenario C says end-customer | Decision pending |
 | Contract | CPQ order form | M-Files signed document | SalesCloud opportunity | End date: **decision pending** | Decision pending |
-| Partner | SAP partner id | Reseller sold-to | Alliance / implementation partner | Hierarchy vs identity: [Classify the problem first](./Databricks_Data_Modeling_Playbook.md#classify-the-problem-first) | Decision pending |
+| Partner | SAP partner id | Reseller sold-to | Alliance / implementation partner | Hierarchy vs identity: [Classify the problem first](../databricks/Databricks_Data_Modeling_Playbook.md#classify-the-problem-first) | Decision pending |
 
 ---
 
@@ -705,6 +705,7 @@ Copy into the evidence pack. Keep production keys out of this markdown file.
 ## Sources
 
 **Workshop method**
+- [KPI Tree guides — captured local copy](../reference/kpitree-guides-capture-2026-08-26.md)
 - [How to Run a Metric Tree Workshop — KPI Tree](https://kpitree.co/guides/how-to/metric-tree-workshop)
 - [How to Build a Metric Tree — KPI Tree](https://kpitree.co/guides/getting-started/how-to-build-a-metric-tree)
 - [The Decision-Making Gap — KPI Tree](https://kpitree.co/guides/strategy-culture/decision-making-gap)
@@ -728,6 +729,6 @@ Copy into the evidence pack. Keep production keys out of this markdown file.
 **This engagement**
 - [Basware Embed — 2-Week Playbook](./Basware_Engagement_Playbook.md)
 - [KPI Elicitation Protocol for Fragmented Evidence](./Basware_Engagement_Playbook.md#appendix-h--kpi-elicitation-protocol-for-fragmented-evidence)
-- [From source disagreement to Gold definition](./Databricks_Data_Modeling_Playbook.md#4-from-source-disagreement-to-gold-definition)
-- [Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md)
-- [Basware Business 101 + Glossary](./Basware_Business_101_Glossary.md)
+- [From source disagreement to Gold definition](../databricks/Databricks_Data_Modeling_Playbook.md#4-from-source-disagreement-to-gold-definition)
+- [Unity Catalog Metric Views architecture brief](../databricks/Metric_Views_Brief.md)
+- [Basware Business 101 + Glossary](../business/Basware_Business_101_Glossary.md)

@@ -4,7 +4,7 @@
 
 Decision-support reference for Gold-layer modeling choices during the Basware embed. When a walkthrough raises a modeling, pipeline, or source-disagreement question, use this file to pick a defensible pattern.
 
-Business vocabulary: [Basware Business 101 + Glossary](./Basware_Business_101_Glossary.md). Delivery plan: [Basware Embed — 2-Week Playbook](./Basware_Engagement_Playbook.md). Case-clinic visuals and calculation templates: [Metric Workshop](./Metric_Workshop.md). Metric-view fitness: [Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md). Platform refresh: [Databricks on Azure — catch-up guide](./Databricks_on_Azure_Catchup.md) and [Databricks platform architecture changes, 2024–2026](./Databricks_Platform_Architecture_2024-2026.md).
+Business vocabulary: [Basware Business 101 + Glossary](../business/Basware_Business_101_Glossary.md). Delivery plan: [Basware Embed — 2-Week Playbook](../engagement/Basware_Engagement_Playbook.md). Case-clinic visuals and calculation templates: [Metric Workshop](../engagement/Metric_Workshop.md). Metric-view fitness: [Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md). Platform refresh: [Databricks on Azure — catch-up guide](./Databricks_on_Azure_Catchup.md) and [Databricks platform architecture changes, 2024–2026](./Databricks_Platform_Architecture_2024-2026.md).
 
 ## Contents
 
@@ -41,7 +41,7 @@ Business vocabulary: [Basware Business 101 + Glossary](./Basware_Business_101_Gl
 
 ## How to use this reference
 
-This is a decision-support reference, not the two-week delivery plan. Use the [Basware Embed — 2-Week Playbook](./Basware_Engagement_Playbook.md) for workshop cadence, decision ownership, and deliverable production; use this document when the walkthrough raises a technical or modeling choice.
+This is a decision-support reference, not the two-week delivery plan. Use the [Basware Embed — 2-Week Playbook](../engagement/Basware_Engagement_Playbook.md) for workshop cadence, decision ownership, and deliverable production; use this document when the walkthrough raises a technical or modeling choice.
 
 | If the walkthrough raises this question | Go to | Use it to decide |
 |---|---|---|
@@ -51,7 +51,7 @@ This is a decision-support reference, not the two-week delivery plan. Use the [B
 | Which source attribute is authoritative, or how should conflicting values be reconciled? | [4. From source disagreement to Gold definition](#4-from-source-disagreement-to-gold-definition) | Evidence-gathering and deterministic reconciliation pattern. |
 | Is the SAP partner issue a hierarchy, reconciliation, or identity-matching problem? | [Classify the problem first](#classify-the-problem-first) | The least-complex valid resolution path. |
 | How do I map a business concept to real columns across SalesCloud / CPQ / M-Files / SAP? | [Mapping sub-tasks](#mapping-sub-tasks) | A research and transformation sequence. |
-| How should the team explain model or KPI impact to stakeholders? | [Metric Workshop](./Metric_Workshop.md) | A shared calculation card, scenario matrix, and visual sequence — not a lineage DAG first. |
+| How should the team explain model or KPI impact to stakeholders? | [Metric Workshop](../engagement/Metric_Workshop.md) | A shared calculation card, scenario matrix, and visual sequence — not a lineage DAG first. |
 | Can Metric Views hold Basware's ARR logic? | [Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md) | Fitness of the native semantic layer, not a two-week build plan. |
 | Should a future Discovery phase evaluate a tool, vendor, or alternative semantic layer? | [5. Later — Discovery only](#5-later--discovery-only) | A forward-looking option, not a two-week embed commitment. |
 
@@ -312,14 +312,14 @@ The grind of mapping business concepts to real columns across SalesCloud/CPQ/M-F
 | **Sniff source tables for known labels** | Query `information_schema.columns` (or `system.information_schema`) across every catalog/schema with a `LIKE '%end_date%'`-style scan — the actual mechanism for finding candidate columns at scale, not eyeballing; Unity Catalog's global search bar for free-text name/comment search | Given an exported column-name dump from the query above, pattern-match likely candidates across hundreds of columns in one pass — faster and more consistent than manual review | **Valentine** (schema-matching benchmark/framework — embedding + heuristic column-similarity methods, built for exactly this "which column in system B corresponds to this one in system A" problem); `rapidfuzz`/`thefuzz` for a lighter-weight fuzzy match against a controlled vocabulary |
 | **Join within and across sources** | Genie/Databricks SQL for actual join execution and iteration; Lakehouse Federation to join live against SAP/Salesforce without migrating first | Draft join SQL from a described schema when keys aren't obvious, and propose candidate join paths you hadn't considered | Splink/Zingg ([Appendix B](#appendix-b--tool-matrix)) when there's no clean shared key; `networkx` to model tables as a graph and enumerate join paths when the route between two entities isn't obvious across many tables |
 | **Generate & validate hypotheses by trustful ranges** | DQX profiling + rule-candidate generation ([Appendix B](#appendix-b--tool-matrix)); Lakehouse Monitoring for ongoing range/drift checks | Turn a profiling summary into a stated hypothesis plus the specific range-test needed to confirm or reject it (e.g., "M-Files end date should always be ≥ CPQ effective date — test this and show exceptions") | **Deequ Constraint Suggestion** — profiles data and auto-infers plausible constraints (ranges, nullability, uniqueness) via heuristic rules, directly generating the "trustful range" hypotheses instead of you guessing them; Great Expectations profiler for a more human-authored version of the same |
-| **Present options/alternatives with statistics and visualization** | Databricks SQL / AI-BI dashboards for a live, client-facing comparison; [Metric Workshop](./Metric_Workshop.md) source strip, tornado, and waterfall for the case clinic | Build the comparison artifact directly — chart, table, or small dashboard — as part of the deliverable itself, not just a description of one | **Evidently AI** — generates HTML comparison/drift reports between two datasets out of the box (e.g., distribution of M-Files dates vs. CPQ dates side by side); `ydata-profiling`'s two-dataset compare mode |
+| **Present options/alternatives with statistics and visualization** | Databricks SQL / AI-BI dashboards for a live, client-facing comparison; [Metric Workshop](../engagement/Metric_Workshop.md) source strip, tornado, and waterfall for the case clinic | Build the comparison artifact directly — chart, table, or small dashboard — as part of the deliverable itself, not just a description of one | **Evidently AI** — generates HTML comparison/drift reports between two datasets out of the box (e.g., distribution of M-Files dates vs. CPQ dates side by side); `ydata-profiling`'s two-dataset compare mode |
 | **Draft transformation logic** | Lakeflow/DLT to productionize ([3. Lakeflow pipeline design](#3-lakeflow-pipeline-design)) | Claude Code — draft the SQL/PySpark from the confirmed mapping spec, including edge cases | `sqlglot` to validate/transpile the draft SQL; `dbt-codegen` for boilerplate staging-model scaffolding if dbt is in the stack |
 
 The pattern across all six rows: Databricks-native tools are where you *execute* against real governed data, Claude is where you *plan, pattern-match, and draft* faster than doing it by hand, and the open-source tools fill the specific gaps neither of the other two covers well — automated constraint/range inference (Deequ), rigorous column-similarity matching (Valentine), and side-by-side statistical comparison reports (Evidently AI).
 
 ### Workshop visuals
 
-Sequence, audience rules, calculation-card and scenario-matrix templates, and worked ARR examples live in the [Metric Workshop](./Metric_Workshop.md). Use that file in the case clinic. Do not show the lineage DAG to business without pairing it to the metric tree.
+Sequence, audience rules, calculation-card and scenario-matrix templates, and worked ARR examples live in the [Metric Workshop](../engagement/Metric_Workshop.md). Use that file in the case clinic. Do not show the lineage DAG to business without pairing it to the metric tree.
 
 ---
 
@@ -541,7 +541,7 @@ Companion to [4. From source disagreement to Gold definition](#4-from-source-dis
 - [Evidently — open-source ML/data observability framework (GitHub)](https://github.com/evidentlyai/evidently)
 
 **Visualizing metric calculus**
-- Workshop sequence, templates, and worked examples: [Metric Workshop](./Metric_Workshop.md)
+- Workshop sequence, templates, and worked examples: [Metric Workshop](../engagement/Metric_Workshop.md)
 - [SaaS Revenue Waterfall Chart — The SaaS CFO](https://www.thesaascfo.com/saas-revenue-waterfall-chart/)
 - [Understanding ARR Waterfall Charts — Xeinadin](https://www.xeinadin.com/office/rochester/insights/understanding-arr-waterfall-charts-a-key-tool-for-saas-businesses/)
 - [Every Product Needs a North Star Metric — Amplitude](https://amplitude.com/blog/product-north-star-metric)

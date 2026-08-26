@@ -188,7 +188,7 @@ Since there's no BA to run structured elicitation for you, borrow their toolkit:
 
 ## 8. Databricks technical toolkit — moved out
 
-The modeling principles, feature catalog, Lakeflow pipeline rules, and source-to-Gold reconciliation method now live in the [Databricks Lakehouse Data Modeling Playbook](./Databricks_Data_Modeling_Playbook.md). This file stays focused on Basware's business domain; that one covers the technical toolkit you design the canonical model with.
+The modeling principles, feature catalog, Lakeflow pipeline rules, and source-to-Gold reconciliation method now live in the [Databricks Lakehouse Data Modeling Playbook](../databricks/Databricks_Data_Modeling_Playbook.md). This file stays focused on Basware's business domain; that one covers the technical toolkit you design the canonical model with.
 
 ---
 
