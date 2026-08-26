@@ -4,12 +4,13 @@
 
 Decision-support reference for Gold-layer modeling choices during the Basware embed. When a walkthrough raises a modeling, pipeline, or source-disagreement question, use this file to pick a defensible pattern.
 
-Business vocabulary: [Basware Business 101 + Glossary](../business/Basware_Business_101_Glossary.md). Delivery plan: [Basware Embed — 2-Week Playbook](../engagement/Basware_Engagement_Playbook.md). Case-clinic visuals and calculation templates: [Metric Workshop](../engagement/Metric_Workshop.md). Metric-view fitness: [Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md). Platform refresh: [Databricks on Azure — catch-up guide](./Databricks_on_Azure_Catchup.md) and [Databricks platform architecture changes, 2024–2026](./Databricks_Platform_Architecture_2024-2026.md).
+Business vocabulary: [Basware Business 101 + Glossary](../business/Basware_Business_101_Glossary.md). Delivery plan: [Basware Embed — 2-Week Playbook](../engagement/Basware_Engagement_Playbook.md). Case-clinic visuals and calculation templates: [Metric Workshop](../engagement/Metric_Workshop.md). Metric-view fitness: [Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md). Platform refresh: [Databricks on Azure — catch-up guide](./Databricks_on_Azure_Catchup.md) and [Databricks platform architecture changes, 2024–2026](./Databricks_Platform_Architecture_2024-2026.md). Keys: [Surrogate keys — reference guide](./Surrogate_Keys_Reference.md).
 
 ## Contents
 
 - [How to use this reference](#how-to-use-this-reference)
   - [Evidence and claim convention](#evidence-and-claim-convention)
+- [Surrogate keys — reference guide](./Surrogate_Keys_Reference.md)
 - [1. Modeling principles](#1-modeling-principles)
 - [2. Feature catalog](#2-feature-catalog)
   - [A. Table types](#a-table-types)
@@ -24,6 +25,7 @@ Business vocabulary: [Basware Business 101 + Glossary](../business/Basware_Busin
   - [Cost, deployment, and observability](#cost-deployment-and-observability)
   - [Review checklist](#review-checklist-for-a-model-change)
   - [Service columns](#service-columns-on-lakeflow-targets)
+  - [Kimball technical columns](#appendix-c--kimball-technical-columns)
 - [4. From source disagreement to Gold definition](#4-from-source-disagreement-to-gold-definition)
   - [Classify the problem first](#classify-the-problem-first)
   - [Method](#method)
@@ -35,7 +37,14 @@ Business vocabulary: [Basware Business 101 + Glossary](../business/Basware_Busin
   - [Buy vs. build](#buy-vs-build)
 - [Appendix A — Reading list](#appendix-a--reading-list)
 - [Appendix B — Tool matrix](#appendix-b--tool-matrix)
-- [Appendix C — Sources](#appendix-c--sources)
+- [Appendix C — Kimball technical columns](#appendix-c--kimball-technical-columns)
+  - [Stage table](#stage-table-bronze)
+  - [Intermediate table](#intermediate-table-silver)
+  - [Dimension tables](#dimension-tables-gold)
+  - [Fact tables](#fact-tables-gold)
+  - [Bridge tables](#bridge-tables-gold)
+  - [Lakeflow mapping](#lakeflow-mapping)
+- [Appendix D — Sources](#appendix-d--sources)
 
 ---
 
@@ -46,8 +55,10 @@ This is a decision-support reference, not the two-week delivery plan. Use the [B
 | If the walkthrough raises this question | Go to | Use it to decide |
 |---|---|---|
 | What should the selected KPI's grain, facts, dimensions, keys, or history look like? | [1. Modeling principles](#1-modeling-principles) and [2B. Modeling instruments](#b-modeling-instruments) | The appropriate model and Lakeflow dataset pattern. |
+| Natural key vs surrogate, hash vs IDENTITY, will a full refresh break fact joins? | [Surrogate keys — reference guide](./Surrogate_Keys_Reference.md) | Generation method, reload safety, SCD2 entity vs version, Lakeflow pairing. |
 | Does the implementation need CDC, expectations, backfill, or a full-refresh plan? | [3. Lakeflow pipeline design](#3-lakeflow-pipeline-design) | A safe operational recommendation. |
 | Which service columns does a Lakeflow target actually get (change timestamp, SCD2 validity, file metadata)? | [Service columns on Lakeflow targets](#service-columns-on-lakeflow-targets) | What is implicit on the table vs explicit in the SELECT vs CDF read-path only. |
+| Which Kimball technical columns belong on stage, intermediate, dimension, fact, and bridge tables? | [Appendix C — Kimball technical columns](#appendix-c--kimball-technical-columns) | Minimum vs maximum lineage/key/SCD columns per layer — design choices, not Databricks-generated fields. |
 | Which source attribute is authoritative, or how should conflicting values be reconciled? | [4. From source disagreement to Gold definition](#4-from-source-disagreement-to-gold-definition) | Evidence-gathering and deterministic reconciliation pattern. |
 | Is the SAP partner issue a hierarchy, reconciliation, or identity-matching problem? | [Classify the problem first](#classify-the-problem-first) | The least-complex valid resolution path. |
 | How do I map a business concept to real columns across SalesCloud / CPQ / M-Files / SAP? | [Mapping sub-tasks](#mapping-sub-tasks) | A research and transformation sequence. |
@@ -123,7 +134,7 @@ How to *shape* data.
 
 | Instrument | What it does | Fit for Basware |
 |---|---|---|
-| **Identity / auto-increment columns** (`GENERATED ALWAYS AS IDENTITY`) | Auto-generated surrogate keys. | Standard surrogate-key pattern for conformed dimensions (`Customer`, `Partner`, `Contract`) instead of relying on natural keys from any one source system. |
+| **Identity / auto-increment columns** (`GENERATED ALWAYS AS IDENTITY`) | Auto-generated surrogate keys. | Compact integer SK for **append-only** streaming targets that are **never full-refreshed**. Not the default for rebuildable Gold dimensions (especially MVs). Full options, Kimball vs Lakeflow, and reload rules: [Surrogate keys — reference guide](./Surrogate_Keys_Reference.md). |
 | **PK/FK constraints (informational)** | Declared, not always enforced, relationships between tables. | Self-documents the canonical model — makes "how does Contract relate to Customer" answerable by reading the schema, not by asking someone. |
 | **SCD Type 2** (via `APPLY CHANGES INTO` / `create_auto_cdc_flow` in Lakeflow) | Preserves full change history per record with effective-dated rows. | Directly relevant: if Contract End Date changes over time across systems, SCD2 on the `Contract` dimension gives you an auditable history instead of one overwritten value. |
 | **Change Data Feed (CDF)** | Row-level change tracking (insert/update/delete) on a Delta table. | Feeds SCD2 processing and lets Silver→Gold propagate deletes/updates correctly instead of silently going stale. |
@@ -186,7 +197,7 @@ Turns the modeling principles into operational rules for Lakeflow pipelines. The
 ### Design and dataset choice
 
 - **Choose the dataset type by processing need, not by layer name.** Use streaming tables for append-oriented ingestion and incremental row transformations; materialized views for analytical joins, aggregations, and precomputed serving datasets; and temporary views for pipeline-only intermediate logic. In Gold, use materialized views for most dimensions and aggregates; use streaming tables for incrementally maintained facts or SCD Type 2 history.
-- **Make the target grain and key explicit before authoring the flow.** Facts represent events or measurements; dimensions represent business entities. Prefer a stable source natural key; introduce a surrogate key only where source identifiers are reused or mutable. Keep fact tables keyed to dimensions rather than copying descriptive attributes into every fact.
+- **Make the target grain and key explicit before authoring the flow.** Facts represent events or measurements; dimensions represent business entities. Prefer a stable source natural key; introduce a surrogate key only where source identifiers are reused or mutable. Keep fact tables keyed to dimensions rather than copying descriptive attributes into every fact. Lookup for generation methods, reload safety, and IDENTITY vs hash: [Surrogate keys — reference guide](./Surrogate_Keys_Reference.md).
 - **Use declarative CDC, not hand-written `MERGE`, for ordered change feeds.** `AUTO CDC ... INTO` / `create_auto_cdc_flow()` addresses ordering, deduplication, out-of-order changes, schema evolution, and SCD Type 1 or Type 2 behavior. Define the business key and reliable sequencing column deliberately; this is not a substitute for resolving ambiguous source semantics. For the columns the target actually receives (`__START_AT` / `__END_AT`, rescued data, CDF read-path fields), see [Service columns on Lakeflow targets](#service-columns-on-lakeflow-targets).
 - **Treat declarative flow APIs as the orchestration boundary.** A normal dataset definition creates a flow automatically. Add explicit flows only for genuine multi-source or specialized patterns, such as appending independent sources to one streaming target. Avoid writing directly to a dataset that the pipeline also manages.
 
@@ -211,11 +222,13 @@ Turns the modeling principles into operational rules for Lakeflow pipelines. The
 
 ### Review checklist for a model change
 
-Before promoting a model or pipeline change, confirm: (1) grain, keys, and SCD behavior are documented; (2) expectations and quarantine behavior match the business risk; (3) a backfill/full-refresh decision and replay source are recorded; (4) the change is deployed through a non-production target first; (5) event-log metrics and failure notification are in place; and (6) Gold consumers have an explicit compatibility and rollback plan.
+Before promoting a model or pipeline change, confirm: (1) grain, keys, and SCD behavior are documented, including the [Kimball technical columns](#appendix-c--kimball-technical-columns) for that table type; (2) expectations and quarantine behavior match the business risk; (3) a backfill/full-refresh decision and replay source are recorded; (4) the change is deployed through a non-production target first; (5) event-log metrics and failure notification are in place; and (6) Gold consumers have an explicit compatibility and rollback plan.
 
 ### Service columns on Lakeflow targets
 
 Lookup for what Databricks actually writes onto a pipeline **target table** versus what only appears when you **read** a change feed. Platform documentation, checked August 2026 — **illustrative pattern**, not a statement about Basware's current implementation. Verify column names in the tenant before putting them in a KPI contract.
+
+These are platform fields. For the Kimball technical columns you *choose* to put on Bronze (stage), Silver (intermediate), and Gold (dimension / fact / bridge) — lineage, batch, natural keys, SCD2 flags — see [Appendix C — Kimball technical columns](#appendix-c--kimball-technical-columns). Do not assume `__START_AT` / `_metadata` / CDF read-path fields already satisfy that checklist.
 
 **Change timestamp is not processing time.** `AUTO CDC` does not stamp `current_timestamp()` onto the target. For SCD Type 2 it copies your `SEQUENCE BY` value into `__START_AT` / `__END_AT`. If that column is ingest time rather than business event time, history will show pipeline time, not source time.
 
@@ -441,7 +454,109 @@ Companion to [4. From source disagreement to Gold definition](#4-from-source-dis
 
 ---
 
-## Appendix C — Sources
+## Appendix C — Kimball technical columns
+
+Checklist of technical columns by table type. **Minimum** is the floor for a load that can be conformed, reprocessed, and queried as current vs history. **Maximum (adds)** is only when the load pattern needs it (scheduled file transmissions, mixed SCD types, many-to-many over time, compliance lineage). **Illustrative pattern** from Kimball — not a statement about Basware's current schemas. Pair with [Service columns on Lakeflow targets](#service-columns-on-lakeflow-targets): those are platform-generated; these are design choices you stamp or persist.
+
+| Kimball table | Medallion home in this playbook |
+|---|---|
+| Stage | Bronze — land, do not conform |
+| Intermediate (post-cleaning/conforming, pre-dimensional) | Silver |
+| Dimension / fact / bridge | Gold presentation |
+
+Chapter cites below refer to the Kimball Toolkit family listed in [Appendix D — Sources](#appendix-d--sources).
+
+### Stage table (Bronze)
+
+| Level | Column | Purpose (Kimball source) |
+|---|---|---|
+| Minimum | `source_system_id` / `source_system_name` | Origin per row — needed for conforming dimensions/facts later (Ch. 12) |
+| Minimum | `extract_datetime` / `load_datetime` | When the record was pulled/landed |
+| Minimum | `batch_id` / `job_run_id` | Ties row to a specific ETL run for reprocessing/troubleshooting |
+| Minimum | `record_source_filename` (or equivalent) | Specific file/feed/table extracted from |
+| Maximum (adds) | `data_transmission_schedule_id` | Which scheduled transmission produced this load |
+| Maximum (adds) | transmission success/failure status | Audit of the transfer itself |
+| Maximum (adds) | `file_duration` / `file_volatility` metadata | Staging-area file lifecycle tracking (Ch. 12 metadata catalog) |
+| Maximum (adds) | `data_lineage_audit_id` | "Where exactly did this record come from and when" (Ch. 12) |
+| Maximum (adds) | security/transmission metadata refs | Passwords/certs, usually externalized but referenced |
+| Maximum (adds) | archive/recovery pointers | If stage layer is retained rather than truncated |
+| Maximum (adds) | `cdc_flag` / change-detection indicator | Kimball: getting this wrong causes inconsistent, hard-to-explain results (Ch. 11) |
+
+### Intermediate table (Silver)
+
+Post-cleaning/conforming, pre-dimensional.
+
+| Level | Column | Purpose (Kimball source) |
+|---|---|---|
+| Minimum | `natural_key` | Source business key, still present — not yet replaced by surrogate |
+| Minimum | `data_quality_status` / `error_flag` | Cleaning subsystem must "create metadata for diagnosing source system problems" (Ch. 11) |
+| Minimum | `load_datetime` / `batch_id` | Carried forward from staging for traceability |
+| Minimum | `transformation_rule_version` / `conforming_ruleset_id` | Which conforming logic version produced this row |
+| Maximum (adds) | `error_event_id` | Links to a dedicated error-event schema/fact (named ETL subsystem) |
+| Maximum (adds) | `data_quality_score` | Finer-grained than a flag |
+| Maximum (adds) | `deduplication_match_id` | Dedup subsystem output |
+| Maximum (adds) | `hierarchy_validation_flag` | Referential integrity across hierarchy levels enforced before it reaches a dimension (Ch. 10) |
+| Maximum (adds) | `surrogate_key_candidate` | If surrogate assignment happens here rather than at final load |
+
+### Dimension tables (Gold)
+
+| Level | Column | Purpose (Kimball source) |
+|---|---|---|
+| Minimum | `surrogate_key` (PK) | "Every data warehouse key should be a surrogate key" (Ch. 11) — never the natural key |
+| Minimum | `natural_key` / `durable_key` | Retained as attribute; durable key survives source-system key reassignment (Ch. 10) |
+| Minimum | `effective_date` | SCD2: start of validity |
+| Minimum | `expiration_date` / `end_date` | SCD2: end of validity |
+| Minimum | `current_row_indicator` | "Easily limit a query to just current rows" (Ch. 11) |
+| Maximum (adds) | `change_reason` / `source_of_change` | e.g. "promotion" or "address change" (Ch. 10 transaction-description pattern) |
+| Maximum (adds) | full begin/end **timestamps** (not just dates) | For near-real-time dimensions needing precision (Ch. 10) |
+| Maximum (adds) | `record_source` per row | Which source system last updated this attribute, when multiple systems feed one conformed dimension (Ch. 12) |
+| Maximum (adds) | `type1_vs_type2_flag` | If the dimension mixes SCD types by attribute |
+
+### Fact tables (Gold)
+
+| Level | Column | Purpose (Kimball source) |
+|---|---|---|
+| Minimum | FK surrogate keys to every dimension | Never natural keys — looked up at load time (Ch. 11) |
+| Minimum | degenerate dimension column(s) | e.g. invoice number with no other attributes worth a dimension (Ch. 10) |
+| Minimum | date/time dimension surrogate keys | Fact rows must point to date dimension keys, not raw SQL timestamps (Ch. 10) |
+| Minimum | `load_datetime` / `batch_id` | Lineage back to the ETL run |
+| Maximum (adds) | status dimension key | For snapshot facts needing open/closed/pending state (Ch. 10 insurance example) |
+| Maximum (adds) | multiple role-played date keys | Different business dates on the same fact row |
+| Maximum (adds) | audit/lineage key to originating batch | Compliance: "prove the lineage of key reported operating results" (Ch. 11) |
+
+### Bridge tables (Gold)
+
+| Level | Column | Purpose (Kimball source) |
+|---|---|---|
+| Minimum | multiple surrogate key FKs | PK composed of FKs to the dimensions being resolved (Ch. 10, account-to-customer example) |
+| Minimum | weighting factor | Allocation for many-to-many relationships, avoids double-counting |
+| Maximum (adds) | `begin_effective_date` / `end_effective_date` | Represents changing relationships over time; must constrain queries to one date between them (Ch. 10) |
+| Maximum (adds) | `top_flag` / `lowest_flag` | Marks "supreme parent" vs. leaf level in hierarchy bridges (Ch. 10) |
+
+### Cross-cutting rule
+
+Applies to all three presentation table types (dimension, fact, bridge):
+
+> Anchor all dimensions with durable surrogate keys... An isolated surrogate key has no applications content. It is just an identifier. (Ch. 12)
+
+Every column above exists to make that identifier auditable and traceable, not to carry business meaning itself.
+
+### Lakeflow mapping
+
+Do not treat platform fields as a substitute for the Minimum column until you have confirmed they are **on the table**, not only on a read path, and that they mean the same thing.
+
+| Kimball column | Closest Lakeflow / Delta field | Gap to close yourself |
+|---|---|---|
+| `record_source_filename` | Auto Loader `_metadata.file_path` / `file_name` | Hidden until selected onto the target |
+| `extract_datetime` / `load_datetime` | `current_timestamp()` in the ingest `SELECT` | AUTO CDC does **not** stamp wall-clock ingest time |
+| `batch_id` / `job_run_id` | Pipeline update id in the event log | Not a row column unless you persist it |
+| `cdc_flag` | CDF `_change_type` | Read-path only (`table_changes()`); persist if Silver needs it |
+| SCD2 `effective_date` / `expiration_date` | `__START_AT` / `__END_AT` | Typed as `SEQUENCE BY`; current row is `__END_AT IS NULL`, not a separate flag unless you add `current_row_indicator` |
+| `surrogate_key` | `GENERATED ALWAYS AS IDENTITY` | Only if declared on `CREATE STREAMING TABLE` |
+
+---
+
+## Appendix D — Sources
 
 **Data modeling & Metric Views**
 - [Databricks Lakehouse Data Modeling: Myths, Truths, and Best Practices](https://www.databricks.com/blog/databricks-lakehouse-data-modeling-myths-truths-and-best-practices)
@@ -458,6 +573,7 @@ Companion to [4. From source disagreement to Gold definition](#4-from-source-dis
 **Lakeflow pipelines**
 - [Best practices for Lakeflow pipelines](https://learn.microsoft.com/en-us/azure/databricks/ldp/best-practices/)
 - [Dimensional modeling in Lakeflow pipelines](https://learn.microsoft.com/en-us/azure/databricks/ldp/best-practices/dimensional-modeling)
+- [Surrogate keys — reference guide](./Surrogate_Keys_Reference.md) — generation options, Kimball vs Lakeflow, reload and clustering rules
 - [Streaming tables](https://learn.microsoft.com/en-us/azure/databricks/ldp/concepts/streaming-tables)
 - [Flows](https://learn.microsoft.com/en-us/azure/databricks/ldp/concepts/flows)
 - [Backfilling historical data with pipelines](https://learn.microsoft.com/en-us/azure/databricks/ldp/flows-backfill)
@@ -556,3 +672,7 @@ Companion to [4. From source disagreement to Gold definition](#4-from-source-dis
 - [File metadata column](https://docs.databricks.com/aws/en/ingestion/file-metadata-column)
 - [Use change data feed on Databricks](https://docs.databricks.com/aws/en/tables/features/change-data-feed)
 - [Ingest data from Apache Kafka — source metadata column](https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/kafka-pipeline)
+
+**Kimball dimensional / ETL design** (chapter cites in [Appendix C](#appendix-c--kimball-technical-columns))
+- Ralph Kimball and Margy Ross, *The Data Warehouse Toolkit* (3rd ed.) — presentation-layer keys, SCD2, role-playing dates, bridges, durable keys
+- Ralph Kimball and Joe Caserta, *The Data Warehouse ETL Toolkit* — staging metadata, cleaning/conforming, CDC, lineage and audit

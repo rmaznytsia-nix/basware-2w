@@ -22,6 +22,7 @@ Working materials for a two-week Basware data-architecture engagement. The repos
   - [Basware Business 101 + Glossary](./business/Basware_Business_101_Glossary.md) — terminology for KPI and data-domain conversations
 - **[databricks/](./databricks/)** — platform, modeling, and semantic-layer reference
   - [Databricks Lakehouse Data Modeling Playbook](./databricks/Databricks_Data_Modeling_Playbook.md) — modeling patterns, data quality, lineage, and metric-definition decisions
+  - [Surrogate keys — reference guide](./databricks/Surrogate_Keys_Reference.md) — natural key vs surrogate, hash vs IDENTITY, reload and clustering rules
   - [Databricks on Azure — catch-up guide](./databricks/Databricks_on_Azure_Catchup.md) — reading order for Azure Databricks platform docs
   - [Databricks platform architecture changes, 2024–2026](./databricks/Databricks_Platform_Architecture_2024-2026.md) — architecture digest for identity, catalog, compute, pipelines, and the semantic layer
   - [Unity Catalog Metric Views architecture brief](./databricks/Metric_Views_Brief.md) — fitness of the native semantic layer for Basware KPI logic
