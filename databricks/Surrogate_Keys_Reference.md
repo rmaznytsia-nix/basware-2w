@@ -18,6 +18,7 @@ Lookup for Gold-layer key generation during modeling and Lakeflow design. Not a 
 - [Substitution and storage](#substitution-and-storage)
 - [SCD2: entity vs version](#scd2-entity-vs-version)
 - [Lakeflow pairing](#lakeflow-pairing)
+- [Data Vault 2.0](#data-vault-20)
 - [Hard rules](#hard-rules)
 - [Sources](#sources)
 
@@ -32,6 +33,7 @@ Lookup for Gold-layer key generation during modeling and Lakeflow design. Not a 
 | Hash vs IDENTITY vs mapping table? | [Generation options](#generation-options) |
 | SCD2 needs a new key? | [SCD2: entity vs version](#scd2-entity-vs-version) |
 | Dim is an MV, fact is a streaming table? | [Lakeflow pairing](#lakeflow-pairing) |
+| How does Data Vault 2.0 mint keys? | [Data Vault 2.0](#data-vault-20) |
 
 ---
 
@@ -144,6 +146,53 @@ Treat full refresh as a controlled procedure (watermark / stateful logic changes
 
 ---
 
+## Data Vault 2.0
+
+DV 2.0 answers the same problem by **splitting identity from history** and making the entity key a **stateless hash of the business key**. It does not mint Kimball integers, and it does not use `IDENTITY`.
+
+### What DV 2.0 actually does with keys
+
+| Object | Key | Survives full refresh? |
+|---|---|---|
+| **Hub** | `HASH(business_key)` — entity only | Yes. Same BK → same hub key after rebuild, late facts, parallel writers |
+| **Link** | `HASH(bk_a \|\| bk_b \|\| …)` in a fixed order | Yes. Relationship identity is a function of the contributing BKs |
+| **Satellite** | Parent hash + `load_date` (and dependent child key if needed) | Yes. Attribute change does **not** remint the hub |
+
+DV 1.0 used sequences. DV 2.0 dropped them because sequences fail the three jobs above: they need a map, they do not parallelize, and a rebuild remints FKs.
+
+Natural keys stay on the hub as attributes. The hash is the join key everywhere in the vault.
+
+### Mapped to the three jobs
+
+**Identity.** Hash of the BK is deterministic. No NK→SK map, no `max+1`, no `IDENTITY`. A Gold fact (or a link) that stored `contract_hk` yesterday still joins after you drop and rebuild the hub.
+
+**Versioning.** SCD2 is not a new hub key. Hubs are insert-only. History lives in satellites: new row when `hashdiff` of the payload changes. Entity key and version key are different tables, so you never hash the NK alone and call it a version PK.
+
+**Locality.** This is the Databricks collision. Random hashes scatter files. DV 2.0 does not solve clustering; it ignores it (indexes on hash in MPP warehouses were acceptable). On a lakehouse the compatible pattern is already in [Hard rules](#hard-rules): **join on the hash, liquid-cluster on BK / load_date / business date**.
+
+### Against this guide's questions
+
+**Natural key vs surrogate?** Both. BK is retained; the PK/FK is a hash surrogate. That is closer to Kimball's *intent* (anonymous, warehouse-owned) than to the Lakeflow default (join on stable NK). It is the constraint-table row: “dbt / Data Vault-style simplicity + anonymity.”
+
+**Will a full refresh break fact joins?** Not if facts/links store hub/link hash keys derived from BKs. Rebuild is a function of the same preimage. Recipe change (`MD5` → `SHA-256`, extra delimiter, adding `source_system` later) remints everything — same warning as the hash row in [Generation options](#generation-options).
+
+**Hash vs IDENTITY vs mapping table?** DV 2.0 refuses IDENTITY and refuses a sequence map. The map is replaced by the hash function. The remaining stateful object is **not** a key mint: it is a **same-as link** (or Business Vault bridge) when two BKs mean one real-world entity.
+
+**SCD2 needs a new key?** No new entity key. New satellite row. Optional `load_end_date` on the satellite if you end-date; many vaults stay insert-only and compute current/PIT at read time (same idea as `__END_AT IS NULL`).
+
+**Dim = MV, fact = streaming?** Compatible, because the dim key is a function of the BK. An MV that recomputes hubs still emits the same `hk`. IDENTITY on that MV would be the anti-pattern DV 2.0 was designed to avoid.
+
+### What DV 2.0 does not solve
+
+- **File locality** — still `CLUSTER BY` the BK/date, not the hash.
+- **A business match rule** — same-as is explicit; hashing does not merge identities.
+- **PII** — hashing a customer number is not anonymization ([Hard rules](#hard-rules) #6).
+- **Gold usability** — analysts still want a star. Typical lakehouse: Raw Vault in Silver (hash keys), Gold dims/facts either keep those hash FKs or project order-preserving/NK keys *as a function of the same BK* so Gold refresh still does not break.
+
+**One-line summary:** DV 2.0 makes the join key a reload-safe hash of the business key and puts SCD2 in satellites instead of reminting the entity — not `IDENTITY` or a dropped map.
+
+---
+
 ## Hard rules
 
 1. **Do not put `IDENTITY` on a rebuildable Gold dimension** (especially an MV). Databricks and Kimball reload math agree.
@@ -166,6 +215,6 @@ Treat full refresh as a controlled procedure (watermark / stateful logic changes
 |---|---|
 | [Dimensional modeling in Lakeflow pipelines](https://learn.microsoft.com/en-us/azure/databricks/ldp/best-practices/dimensional-modeling) | Natural-key preference; hash warning; order-preserving deterministic SK; IDENTITY refresh caveat |
 | Kimball Group, *The Data Warehouse Toolkit* / ETL companion — Ch. 10–12 | Sequential SK; reject natural/smart join keys; durable key; NK→SK map; SK pipeline; late-arriving facts; instance-independent key service |
-| dbt `generate_surrogate_key`; Data Vault 2.0 hash keys | Modern stateless hash practice (not Kimball text) |
+| dbt `generate_surrogate_key`; Data Vault 2.0 hash keys | Stateless hub/link hashes; satellites for history — [Data Vault 2.0](#data-vault-20) |
 | Playbook [Appendix C — Kimball technical columns](./Databricks_Data_Modeling_Playbook.md#appendix-c--kimball-technical-columns) | Minimum `surrogate_key` / `natural_key` / `durable_key` on Gold dims; IDENTITY only if declared on `CREATE STREAMING TABLE` |
 | Playbook [§3 Lakeflow pipeline design](./Databricks_Data_Modeling_Playbook.md#3-lakeflow-pipeline-design) | Prefer stable NK; SK only if source IDs reused/mutable; full refresh as recovery procedure |

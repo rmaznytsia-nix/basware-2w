@@ -44,7 +44,14 @@ Business vocabulary: [Basware Business 101 + Glossary](../business/Basware_Busin
   - [Fact tables](#fact-tables-gold)
   - [Bridge tables](#bridge-tables-gold)
   - [Lakeflow mapping](#lakeflow-mapping)
-- [Appendix D — Sources](#appendix-d--sources)
+- [Appendix D — Data Vault 2.0 and the star](#appendix-d--data-vault-20-and-the-star)
+  - [Core terminology](#core-terminology)
+  - [How they coexist](#how-they-coexist)
+  - [When the hybrid is recommended](#when-the-hybrid-is-recommended)
+    - [Use Silver vault + Gold star](#use-silver-vault--gold-star)
+    - [Skip a full vault](#skip-a-full-vault)
+    - [Do not](#do-not)
+- [Appendix E — Sources](#appendix-e--sources)
 
 ---
 
@@ -59,6 +66,7 @@ This is a decision-support reference, not the two-week delivery plan. Use the [B
 | Does the implementation need CDC, expectations, backfill, or a full-refresh plan? | [3. Lakeflow pipeline design](#3-lakeflow-pipeline-design) | A safe operational recommendation. |
 | Which service columns does a Lakeflow target actually get (change timestamp, SCD2 validity, file metadata)? | [Service columns on Lakeflow targets](#service-columns-on-lakeflow-targets) | What is implicit on the table vs explicit in the SELECT vs CDF read-path only. |
 | Which Kimball technical columns belong on stage, intermediate, dimension, fact, and bridge tables? | [Appendix C — Kimball technical columns](#appendix-c--kimball-technical-columns) | Minimum vs maximum lineage/key/SCD columns per layer — design choices, not Databricks-generated fields. |
+| Can Data Vault and a star schema coexist, and what do hub/link/sat/PIT mean? | [Appendix D — Data Vault 2.0 and the star](#appendix-d--data-vault-20-and-the-star) | Silver vault for integration/history; Gold star for BI. Not two competing Gold models. |
 | Which source attribute is authoritative, or how should conflicting values be reconciled? | [4. From source disagreement to Gold definition](#4-from-source-disagreement-to-gold-definition) | Evidence-gathering and deterministic reconciliation pattern. |
 | Is the SAP partner issue a hierarchy, reconciliation, or identity-matching problem? | [Classify the problem first](#classify-the-problem-first) | The least-complex valid resolution path. |
 | How do I map a business concept to real columns across SalesCloud / CPQ / M-Files / SAP? | [Mapping sub-tasks](#mapping-sub-tasks) | A research and transformation sequence. |
@@ -90,7 +98,7 @@ Rules for the canonical Gold-layer model. Cite a source if someone needs the pap
 - Declare PK/FK relationships in the Gold model — informational constraints have been supported since DBR 11.3, GA at DBR 15.2, and make the canonical model self-documenting. [[Myths, Truths, and Best Practices]](https://www.databricks.com/blog/databricks-lakehouse-data-modeling-myths-truths-and-best-practices)
 - Tune star/snowflake schemas with **Liquid Clustering** (not ZORDER) + Photon before concluding dimensional modeling "doesn't perform" on Databricks. [[Myths, Truths, and Best Practices]](https://www.databricks.com/blog/databricks-lakehouse-data-modeling-myths-truths-and-best-practices) · [[Star Schema Best Practices on Databricks SQL]](https://medium.com/dbsql-sme-engineering/star-schema-data-modeling-best-practices-on-databricks-sql-8fe4bd0f6902)
 - Encode each certified metric **once** as a Unity Catalog metric view (grain, joins, time semantics) so ARR/gross-margin logic is not re-implemented per report. Use metric views as the **certified consumption contract on a correct Gold grain**, not as the place that invents Contract End Date or partner identity. Fitness, Power BI constraints, and the dual-path workaround are in the [Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md).
-- Reach for **Data Vault (hubs/links/satellites)** when several source systems legitimately disagree — it's designed to stay stable without forcing premature agreement on "the truth," which is exactly the Contract End Date situation. [[Data Vault Best Practice Implementation on Lakehouse]](https://www.databricks.com/blog/data-vault-best-practice-implementation-lakehouse)
+- Reach for **Data Vault (hubs/links/satellites)** when several source systems legitimately disagree — it's designed to stay stable without forcing premature agreement on "the truth," which is exactly the Contract End Date situation. Vocabulary, layer mapping, and when Silver vault + Gold star is recommended: [Appendix D](#appendix-d--data-vault-20-and-the-star). [[Data Vault Best Practice Implementation on Lakehouse]](https://www.databricks.com/blog/data-vault-best-practice-implementation-lakehouse)
 - Mix modeling techniques by layer deliberately (e.g., Vault-like or normalized in Silver, dimensional/star in Gold) — hybrid is the documented norm, not a compromise. [[Different Data Warehousing Modeling Techniques on Databricks]](https://www.databricks.com/blog/2022/06/24/data-warehousing-modeling-techniques-and-their-implementation-on-the-databricks-lakehouse-platform.html)
 - Score governance/interoperability against the existing 7-pillar Well-Architected rubric instead of inventing new criteria — it's already the framework N-iX committed to with Basware. [[Databricks Well-Architected Framework]](https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/well-architected)
 
@@ -141,7 +149,7 @@ How to *shape* data.
 | **Deletion vectors** | Marks rows deleted via metadata instead of rewriting files immediately. | Performance/safety net under CDF-driven deletes — not something you design around, just know it's there. |
 | **Metric Views** | Semantic layer: define a metric's grain, joins, and time logic once, reuse across SQL, BI, and Genie. | Certified consumption contract on a correct Gold grain — not the place that invents Contract End Date. See the [Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md). |
 | **Lakeflow / DLT expectations** | Declarative data-quality rules enforced in the pipeline (`EXPECT`, drop/fail/warn). | Where "quality checks built into the model design, validated before build" (from the pitch deck) actually gets implemented, not just described. |
-| **Data Vault hubs/links/satellites** | Business-key hubs, relationship links, descriptive satellites — resilient under disagreeing sources. | Alternative/hybrid pattern for Silver if Contract End Date turns out to need multi-source reconciliation rather than a single winner. |
+| **Data Vault hubs/links/satellites** | Business-key hubs, relationship links, descriptive satellites — resilient under disagreeing sources. | Alternative/hybrid pattern for Silver if Contract End Date turns out to need multi-source reconciliation rather than a single winner. Terms and vault+star mapping: [Appendix D](#appendix-d--data-vault-20-and-the-star). |
 | **Liquid Clustering** | Adaptive physical clustering, replaces ZORDER/partitioning for most cases. | Physical layout choice for Gold fact/dimension tables — pair with star schema, not instead of it. See [1. Modeling principles](#1-modeling-principles). |
 
 ### C. Consumer integrations
@@ -412,11 +420,11 @@ Ranked for what you actually need: defending a canonical Gold-layer model, judgi
 
 3. **[Unity Catalog metric views — official docs](https://docs.databricks.com/aws/en/uc-semantics/metric-views/)** — not a blog, the actual spec. Key detail: metrics are defined once in YAML/SQL and reused across SQL, Power BI, and AI tools — if it *can* hold Basware's ARR logic, that logic becomes reusable everywhere instead of re-implemented per report. Read the spec, then the [architecture brief](./Metric_Views_Brief.md), before forming an opinion on the Metric Views risk.
 
-4. **[Data Vault Best Practice Implementation on Lakehouse](https://www.databricks.com/blog/data-vault-best-practice-implementation-lakehouse)** — the most *situationally* relevant piece despite being older (2023). Data Vault's hub/link/satellite pattern is purpose-built for exactly Basware's problem: multiple source systems that disagree (SalesCloud/CPQ/M-Files on contract end date) without forcing premature agreement on "the truth." Alternative or hybrid to a pure Kimball star schema if the definition ambiguity turns out to be structural, not a one-time cleanup.
+4. **[Data Vault Best Practice Implementation on Lakehouse](https://www.databricks.com/blog/data-vault-best-practice-implementation-lakehouse)** — the most *situationally* relevant piece despite being older (2023). Data Vault's hub/link/satellite pattern is purpose-built for exactly Basware's problem: multiple source systems that disagree (SalesCloud/CPQ/M-Files on contract end date) without forcing premature agreement on "the truth." Alternative or hybrid to a pure Kimball star schema if the definition ambiguity turns out to be structural, not a one-time cleanup. Digest: [Appendix D](#appendix-d--data-vault-20-and-the-star).
 
 5. **[Busting Data Modeling Myths: Truths and Best Practices — DAIS session](https://www.databricks.com/dataaisummit/session/busting-data-modeling-myths-truths-and-best-practices-data-modeling)** — same authors as #1, talk format. Nothing new over the blog, but a citable "Databricks said this at their own summit" reference for a client-facing slide, or a 30-minute skim if you prefer video.
 
-6. **[Different Data Warehousing Modeling Techniques and Their Implementation on Databricks](https://www.databricks.com/blog/2022/06/24/data-warehousing-modeling-techniques-and-their-implementation-on-the-databricks-lakehouse-platform.html)** — the survey piece: Kimball, Inmon/CIF, Data Vault, one-big-table, each mapped onto medallion layers. Dated (2022, pre-Metric-Views) but still the clearest comparative framing available — useful for justifying why you chose star-schema-in-Gold over alternatives in the architecture blueprint. Read alongside #1–#3, not instead of them.
+6. **[Different Data Warehousing Modeling Techniques and Their Implementation on Databricks](https://www.databricks.com/blog/2022/06/24/data-warehousing-modeling-techniques-and-their-implementation-on-the-databricks-lakehouse-platform.html)** — the survey piece: Kimball, Inmon/CIF, Data Vault, one-big-table, each mapped onto medallion layers. Dated (2022, pre-Metric-Views) but still the clearest comparative framing available — useful for justifying why you chose star-schema-in-Gold over alternatives in the architecture blueprint. Read alongside #1–#3, not instead of them. Layer mapping: [Appendix D](#appendix-d--data-vault-20-and-the-star).
 
 7. **[Databricks Well-Architected Framework — data lakehouse](https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/well-architected)** — broader than modeling (7 pillars), but this is the rubric the N-iX pitch deck already committed to for the Well-Architected assessment. Skim "Data & AI Governance" and "Interoperability" specifically — that's where modeling-adjacent scoring criteria live.
 
@@ -464,7 +472,7 @@ Checklist of technical columns by table type. **Minimum** is the floor for a loa
 | Intermediate (post-cleaning/conforming, pre-dimensional) | Silver |
 | Dimension / fact / bridge | Gold presentation |
 
-Chapter cites below refer to the Kimball Toolkit family listed in [Appendix D — Sources](#appendix-d--sources).
+Chapter cites below refer to the Kimball Toolkit family listed in [Appendix E — Sources](#appendix-e--sources).
 
 ### Stage table (Bronze)
 
@@ -556,13 +564,91 @@ Do not treat platform fields as a substitute for the Minimum column until you ha
 
 ---
 
-## Appendix D — Sources
+## Appendix D — Data Vault 2.0 and the star
+
+They coexist **by layer**, not as two competing Gold models. Data Vault is the write-optimized enterprise warehouse (integration + history). The star is the read-optimized presentation layer. Hash-key mechanics: [Surrogate keys — Data Vault 2.0](./Surrogate_Keys_Reference.md#data-vault-20).
+
+**Illustrative pattern** unless a source is cited. Multi-source identity (SalesCloud / CPQ / M-Files) remains **Hypothesis to validate**.
+
+### Core terminology
+
+| Term | What it is |
+|---|---|
+| **Hub** | One row per business entity (Contract, Customer). PK is a hash of the business key; the natural key stays as an attribute. Insert-only. |
+| **Link** | Relationship between hubs (Contract–Customer). PK is a hash of the contributing business keys in a fixed order. |
+| **Satellite** | Descriptive attributes and history for a hub or link. New row when payload `hashdiff` changes — this is SCD2, not a new hub key. Tagged with `record_source`. |
+| **Raw Vault** | Hubs/links/sats with **no** business rules. Reconstruct any source at any time. Do not pick a winner here. |
+| **Business Vault** | Same entity types, plus rules: computed sats, same-as links, PIT, bridges. Still integrated around business concepts. |
+| **Same-as link** | Two hub keys that the business treats as one real-world entity. Changing the match remints the link, not the hubs. |
+| **PIT** (point-in-time) | Snapshot helper: for a given time, which satellite rows were valid. Avoids joining every sat at query time. |
+| **Bridge** | Pre-joined grain helper (often from links) for many-to-many / allocation — same job as a Kimball bridge, built off the vault. |
+| **Information mart** | Gold consumption: typically a **star**. Dim ← hub + sats; fact ← transactional link. |
+
+Do not use Delta Time Travel as a substitute for satellites: `VACUUM` deletes the audit trail the vault is supposed to keep.
+
+### How they coexist
+
+| Layer | Role | Model |
+|---|---|---|
+| **Bronze** | Land source as-is (CDC, lineage, replay) | Source-shaped Delta |
+| **Silver** | Integrate; keep history; stay easy to change. **SoT for marts.** | Raw Vault + Business Vault (or 3NF) |
+| **Gold** | BI, Metric Views, sandboxes | Star / snowflake. Optional PIT/bridge as a half-step |
+
+Hubs and satellites **load dimensions**; **links** load **facts**. Project hash keys to NK / order-preserving keys in Gold; cluster on BK/date, not on `sha2`.
+
+Azure Databricks: Silver warehouse is optimized for **change**; Gold for a **business perspective**. Separately: do **not** use a heavily normalized model (3NF-class, including a raw vault) as the **query** model for a new lakehouse — too many joins, worse data skipping. That is why the star is not optional if humans query the warehouse.
+
+### When the hybrid is recommended
+
+#### Use Silver vault + Gold star
+
+When **several** of these hold:
+
+| Signal | Why |
+|---|---|
+| Many sources for the same business concept | Vault integrates without forcing a premature winner |
+| Audit / reconstruct any source at any time | Raw Vault keeps source history; Time Travel is not a substitute |
+| Sources and relationships change often | Silver stays schema-agile; Gold marts stay stable for a reporting cycle |
+| Batch and streaming must share one physical integration model | Same Raw Vault, then project marts |
+| BI is the primary Gold consumer (Power BI, DBSQL, Metric Views) | Stars are the presentation default |
+
+#### Skip a full vault
+
+When **all** of these hold, Bronze → lighter Silver → Gold star is enough:
+
+| Signal |
+|---|
+| One stable source |
+| Stable keys |
+| No multi-system identity fight |
+
+#### Do not
+
+| Anti-pattern | Do this instead |
+|---|---|
+| Serve enterprise reporting off Raw Vault | Query Gold marts (star / snowflake) |
+| Make Gold a second vault | Keep Gold dimensional; PIT/bridge are helpers, not the mart |
+| Invent cross-system identity in the star | Resolve in Silver; **project** into conformed dimensions |
+
+**Sources (Azure / Databricks)**
+- [Data warehousing architecture (Azure Databricks)](https://learn.microsoft.com/en-us/azure/databricks/sql/get-started/data-warehousing-concepts) — Silver 3NF/DV warehouse; Gold dimensional marts
+- [Data modeling (Azure Databricks)](https://learn.microsoft.com/en-us/azure/databricks/transform/data-modeling) — avoid heavy 3NF as the *query* model; star/snowflake for performance
+- [Data warehouse modeling techniques on the lakehouse](https://www.databricks.com/blog/2022/06/24/data-warehousing-modeling-techniques-and-their-implementation-on-the-databricks-lakehouse-platform.html) — both models; hubs/sats → dims, links → facts; PIT in Gold
+- [Data Vault best practice on the lakehouse](https://www.databricks.com/blog/data-vault-best-practice-implementation-lakehouse) — Business Vault then PIT/views or a proper star
+- [Data Vault 2.0 using Databricks lakehouse on Azure](https://techcommunity.microsoft.com/blog/analyticsonazure/data-vault-2-0-using-databricks-lakehouse-architecture-on-azure/3797493) — medallion ↔ DV layers; star marts; no Time Travel as satellite; PIT/bridge
+
+---
+
+## Appendix E — Sources
 
 **Data modeling & Metric Views**
 - [Databricks Lakehouse Data Modeling: Myths, Truths, and Best Practices](https://www.databricks.com/blog/databricks-lakehouse-data-modeling-myths-truths-and-best-practices)
 - [Data Modeling Best Practices for Lakehouse](https://www.databricks.com/blog/data-modeling-best-practices-implementation-modern-lakehouse)
 - [Unity Catalog metric views — official docs](https://docs.databricks.com/aws/en/uc-semantics/metric-views/)
 - [Data Vault Best Practice Implementation on Lakehouse](https://www.databricks.com/blog/data-vault-best-practice-implementation-lakehouse)
+- [Data warehousing architecture — Azure Databricks](https://learn.microsoft.com/en-us/azure/databricks/sql/get-started/data-warehousing-concepts)
+- [Data modeling — Azure Databricks](https://learn.microsoft.com/en-us/azure/databricks/transform/data-modeling)
+- [Data Vault 2.0 using Databricks lakehouse on Azure](https://techcommunity.microsoft.com/blog/analyticsonazure/data-vault-2-0-using-databricks-lakehouse-architecture-on-azure/3797493)
 - [Busting Data Modeling Myths — DAIS session](https://www.databricks.com/dataaisummit/session/busting-data-modeling-myths-truths-and-best-practices-data-modeling)
 - [Different Data Warehousing Modeling Techniques on Databricks](https://www.databricks.com/blog/2022/06/24/data-warehousing-modeling-techniques-and-their-implementation-on-the-databricks-lakehouse-platform.html)
 - [Databricks Well-Architected Framework](https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/well-architected)
@@ -673,6 +759,6 @@ Do not treat platform fields as a substitute for the Minimum column until you ha
 - [Use change data feed on Databricks](https://docs.databricks.com/aws/en/tables/features/change-data-feed)
 - [Ingest data from Apache Kafka — source metadata column](https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/kafka-pipeline)
 
-**Kimball dimensional / ETL design** (chapter cites in [Appendix C](#appendix-c--kimball-technical-columns))
+**Kimball dimensional / ETL design** (chapter cites in [Appendix C](#appendix-c--kimball-technical-columns); vault+star in [Appendix D](#appendix-d--data-vault-20-and-the-star))
 - Ralph Kimball and Margy Ross, *The Data Warehouse Toolkit* (3rd ed.) — presentation-layer keys, SCD2, role-playing dates, bridges, durable keys
 - Ralph Kimball and Joe Caserta, *The Data Warehouse ETL Toolkit* — staging metadata, cleaning/conforming, CDC, lineage and audit
