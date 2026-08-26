@@ -37,6 +37,8 @@ Business vocabulary: [Basware Business 101 + Glossary](../business/Basware_Busin
   - [Buy vs. build](#buy-vs-build)
 - [Appendix A — Reading list](#appendix-a--reading-list)
 - [Appendix B — Tool matrix](#appendix-b--tool-matrix)
+  - [Gold definition](#gold-definition)
+  - [Metric development](#metric-development)
 - [Appendix C — Kimball technical columns](#appendix-c--kimball-technical-columns)
   - [Stage table](#stage-table-bronze)
   - [Intermediate table](#intermediate-table-silver)
@@ -71,6 +73,7 @@ This is a decision-support reference, not the two-week delivery plan. Use the [B
 | Is the SAP partner issue a hierarchy, reconciliation, or identity-matching problem? | [Classify the problem first](#classify-the-problem-first) | The least-complex valid resolution path. |
 | How do I map a business concept to real columns across SalesCloud / CPQ / M-Files / SAP? | [Mapping sub-tasks](#mapping-sub-tasks) | A research and transformation sequence. |
 | How should the team explain model or KPI impact to stakeholders? | [Metric Workshop](../engagement/Metric_Workshop.md) | A shared calculation card, scenario matrix, and visual sequence — not a lineage DAG first. |
+| Which tool for a Gold-definition or metric-development task? | [Appendix B — Tool matrix](#appendix-b--tool-matrix) | Databricks-native vs AI vs local — lookup, not a second framework. |
 | Can Metric Views hold Basware's ARR logic? | [Unity Catalog Metric Views architecture brief](./Metric_Views_Brief.md) | Fitness of the native semantic layer, not a two-week build plan. |
 | Should a future Discovery phase evaluate a tool, vendor, or alternative semantic layer? | [5. Later — Discovery only](#5-later--discovery-only) | A forward-looking option, not a two-week embed commitment. |
 
@@ -307,7 +310,7 @@ Probabilistic matching tools and enterprise MDM options are in [5. Later — Dis
 
 Isolate one entity/attribute at a time — don't try to reconcile "all contract data," just Contract End Date. Profile each source independently before joining anything, so you're arguing from real distributions, not opinions. Turn competing narratives into testable hypotheses and check them against sample-joined data across the disputed systems. Classify the disagreement pattern (timing-lag / definitional / data-entry-error) before writing any fix — each needs a different remedy. Encode the fix as a deterministic rule when the meanings are known and a shared key exists; reach for probabilistic matching only when there's no reliable shared key at all (e.g., partner/customer identity, not a date field). Validate on a held-out sample with the business SME live, then add a monitor so a future silent break is caught — the exact step that was skipped before the ARR incident.
 
-Tool-by-task lookup is in [Appendix B — Tool matrix](#appendix-b--tool-matrix).
+Tool-by-task lookup is in [Appendix B — Tool matrix](#appendix-b--tool-matrix) — Gold definition for this section; metric development for the [Metric Workshop](../engagement/Metric_Workshop.md) and [Metric Specification Template](../engagement/metric-specification-template.md).
 
 1. **Isolate** one KPI's one ambiguous attribute (Contract End Date for ARR).
 2. **Check for PII before anything leaves the governed environment** — Presidio pass or manual review, if samples will touch Claude or your laptop.
@@ -436,7 +439,13 @@ Lower priority, skip unless spare time allows: **[What Are Metrics in Unity Cata
 
 ## Appendix B — Tool matrix
 
-Companion to [4. From source disagreement to Gold definition](#4-from-source-disagreement-to-gold-definition). The body keeps the method and workflow; this table is the lookup of tools by task.
+Lookup of tools by task. Method and workflow stay in the body: [4. From source disagreement to Gold definition](#4-from-source-disagreement-to-gold-definition) for reconciliation; [Metric Workshop](../engagement/Metric_Workshop.md) and [Metric Specification Template](../engagement/metric-specification-template.md) for draft → Active metric. Facilitation, QBR, and culture stay in those files — not here.
+
+Do not add a second semantic layer (dbt MetricFlow, Cube, KPI Tree SaaS) as the Databricks-native cell. Encode once in **Unity Catalog Metric Views**; alternatives are [5. Later — Discovery only](#5-later--discovery-only).
+
+### Gold definition
+
+Companion to [4. From source disagreement to Gold definition](#4-from-source-disagreement-to-gold-definition). Sampling through blast-radius.
 
 | Task | Databricks-native | AI assistant | Open source (local) |
 |---|---|---|---|
@@ -459,6 +468,23 @@ Companion to [4. From source disagreement to Gold definition](#4-from-source-dis
 | **Definition/glossary version control** (so "customer" doesn't quietly drift again after you leave) | Git-tracked glossary alongside the DLT pipeline code (definitions as code, not a wiki page) | — | OpenMetadata / DataHub if Basware wants a proper catalog+glossary tool beyond a markdown file |
 | **Synthetic/test data generation** (validating a reconciliation rule without moving real Basware PII into Claude or your own tooling) | Faker-seeded synthetic rows matching the real schema | Claude to generate synthetic edge-case rows matching a described schema | `Faker` (Python), or DQX's own synthetic-data utilities if available |
 | **Impact analysis** ("if this column's logic changes, what breaks downstream") | Unity Catalog lineage (table/column-level, from Spark execution plans) — answers this almost for free | Claude to read the lineage graph output and explain blast radius in plain language | — |
+
+### Metric development
+
+Companion to the [Metric Workshop](../engagement/Metric_Workshop.md) and [Metric Specification Template](../engagement/metric-specification-template.md) ([KPI Tree](../reference/kpitree-guides/getting-started.md) build/checklist). Design, decide, and close the loop — not more DQ tools.
+
+| Task | Databricks-native | AI assistant | Open source (local) |
+|---|---|---|---|
+| **Pre-check: does this metric deserve to exist?** | — | Claude to fail vague answers (“monitor performance”, “leadership wants visibility”) against the three spec questions | [Metric Specification Template](../engagement/metric-specification-template.md) pre-check; [KPI Tree — how to choose KPIs](../reference/kpitree-guides/how-to.md#16-how-to-choose-kpis-a-metric-tree-approach-to-kpi-selection---kpi-tree) |
+| **Metric-tree authoring** (North Star → 3–5 levels of drivers) | Nothing native — Metric Views are measures, not a driver tree | Claude to draft a first-level split from an identity (e.g. ARR = new + expansion − churn) | Mermaid / Miro; [Metric Workshop](../engagement/Metric_Workshop.md#5-metric-tree-with-owners-and-evidence) tree; [KPI Tree — how to build](../reference/kpitree-guides/getting-started.md#2-how-to-build-a-metric-tree-kpi-tree---kpi-tree) |
+| **Relationship typing** (additive / multiplicative / influencing + direction) | Document next to the Metric View YAML (git comment/file). Metric Views do not store “churn decreases customer count” | Claude to label edges and flag mixed-level splits (>4 children) | YAML/`metrics.yml` beside the pipeline; KPI Tree edge types |
+| **Falsifiable business definition + acceptance cards** | Lakeflow `EXPECT` on **examples** once Gold exists (this contract’s ARR = X) | Claude to generate true/false contract scenarios from the definition — no SQL in the definition itself | Spec [Business Definition](../engagement/metric-specification-template.md#section-2-business-definition); workshop [acceptance cards](../engagement/Metric_Workshop.md#9-acceptance-cards); Great Expectations as coded Then-statements |
+| **Named owner vs contributors** | UC object owner + tags (`metric_owner`, `status=draft\|active`). One definition owner; leaves are contributor contacts, not extra owners | Do not invent owners | Spec [Metric Owner](../engagement/metric-specification-template.md#section-3-metric-owner) and [Contributors](../engagement/metric-specification-template.md#section-4-contributors-optional); OpenMetadata / DataHub glossary owners |
+| **Definition backtest** (“if we exclude X, what was ARR for eight quarters?”) | DBSQL over Gold + Delta time travel / CDF; two Metric Views side by side | Claude to write the paired query from the [definition-version diff](../engagement/Metric_Workshop.md#11-definition-version-diff) | DuckDB on an export |
+| **Contribution / why did it move** (waterfall, tornado, debug) | DBSQL; AI/BI dashboard; Genie **only** on the certified Metric View | Claude to turn a waterfall table into a Finance narrative | Python contribution analysis; Excel tornado (workshop already); [KPI Tree — debug a metric](../reference/kpitree-guides/how-to.md#66-how-to-debug-a-broken-metric-a-systematic-framework---kpi-tree) |
+| **Targets, thresholds, and metric alerts** | DBSQL alerts / Jobs notifications on the Metric View or Gold table; dashboard reference lines. Lakehouse Monitoring is **data** drift, not ARR vs target | Claude to propose thresholds from history — **hypothesis**, not a committed target | Git-tracked target file; [KPI Tree — set targets](../reference/kpitree-guides/how-to.md#20-how-to-set-kpi-targets-a-data-driven-approach-to-target-setting---kpi-tree) |
+| **Consumption dashboards by tree level** | AI/BI Lakeview on Metric Views; Power BI on the same views. Exec = North Star + 3–4 drivers; team = leaves | Claude to map each visual to a tree node and cut vanity tiles | — (do not add a second semantic layer) |
+| **Status, review cadence, sunset** | UC tags + Metric View `COMMENT`; hide deprecated from Genie | Claude to list unused consumers from lineage + query history | Git + spec [Review cadence](../engagement/metric-specification-template.md#section-10-review-cadence) and [Status](../engagement/metric-specification-template.md#section-11-status); [KPI Tree — sunset a metric](../reference/kpitree-guides/how-to.md#54-how-to-sunset-a-metric-a-practical-guide-to-kpi-pruning---kpi-tree) |
 
 ---
 

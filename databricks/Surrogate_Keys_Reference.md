@@ -217,4 +217,4 @@ Natural keys stay on the hub as attributes. The hash is the join key everywhere 
 | Kimball Group, *The Data Warehouse Toolkit* / ETL companion — Ch. 10–12 | Sequential SK; reject natural/smart join keys; durable key; NK→SK map; SK pipeline; late-arriving facts; instance-independent key service |
 | dbt `generate_surrogate_key`; Data Vault 2.0 hash keys | Stateless hub/link hashes; satellites for history — [Data Vault 2.0](#data-vault-20) |
 | Playbook [Appendix C — Kimball technical columns](./Databricks_Data_Modeling_Playbook.md#appendix-c--kimball-technical-columns) | Minimum `surrogate_key` / `natural_key` / `durable_key` on Gold dims; IDENTITY only if declared on `CREATE STREAMING TABLE` |
-| Playbook [§3 Lakeflow pipeline design](./Databricks_Data_Modeling_Playbook.md#3-lakeflow-pipeline-design) | Prefer stable NK; SK only if source IDs reused/mutable; full refresh as recovery procedure |
+| Playbook [3. Lakeflow pipeline design](./Databricks_Data_Modeling_Playbook.md#3-lakeflow-pipeline-design) | Prefer stable NK; SK only if source IDs reused/mutable; full refresh as recovery procedure |
